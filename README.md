@@ -12,14 +12,18 @@ This tool also finds S3 buckets and cloudfront URL's from those JS files which c
 ```
 git clone https://github.com/nsonaniya2010/SubDomainizer.git
 ```
-2. Install the requirements:
+2. Change the directory:
+```
+cd SubDomainizer
+```
+
+3. Install the requirements:
 
 ```
 sudo apt-get update
 sudo apt-get install python3-termcolor python3-bs4 python3-requests python3-htmlmin python3-tldextract
 ```
-3. Enjoy the Tool.
-
+4. Enjoy the Tool.
 
 ## Usage
 
@@ -61,5 +65,5 @@ This tools is licensed under the GNU GPL license. take a look at the [LICENSE](h
 **Current version is 1.0**
 
 ## Want to Donate?
-Want to donate for the improvement in features and tools?
+Want to donate for the improvement in features and tools? or Liked this tool?
 [Donate Here](https://paypal.me/BugsByNeeraj)
