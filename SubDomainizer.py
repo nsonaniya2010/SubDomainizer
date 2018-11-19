@@ -64,7 +64,7 @@ class JsExtract:
             jss = compiledInline.findall(minhtml)
             for js in jss:
                 finallist.append(js)
-            print(termcolor.colored("Successfully get all the Inline Scripts.", color='blue', attrs=['bold']))
+            print(termcolor.colored("Successfully got all the Inline Scripts.", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error.")
 
