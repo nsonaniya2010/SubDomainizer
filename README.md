@@ -53,3 +53,13 @@ python3 SubDomainizer.py -u https://www.example.com -o output.txt
 ```
 python3 SubDomainizer.py -u https://www.example.com -c "test=1; test=2"
 ```
+
+## License
+This tools is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
+
+## Version
+**Current version is 1.0**
+
+## Want to Donate?
+Want to donate for the improvement in features and tools?
+[Donate Here](https://paypal.me/BugsByNeeraj)
