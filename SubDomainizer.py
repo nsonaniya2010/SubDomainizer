@@ -86,7 +86,6 @@ class JsExtract:
                             'http://' + domain):
                         jsLinkList.append(link.get('src'))
                     elif link.get('src').startswith('http'):
-                        print(link.get('src'))
                         jsLinkList.append(link.get('src'))
                     else:
                         x = url.split('/')
