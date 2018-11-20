@@ -1,6 +1,18 @@
 ## SubDomainizer
 SubDomainizer is a tool designed to find hidden subdomains present is either inline javascript or external javascripts present in the given URL.
-This tool also finds S3 buckets and cloudfront URL's from those JS files which could be interesting like S3 bucket is open to read/write, or subdomain takeover and similar case for cloudfront.
+This tool also finds S3 buckets, cloudfront URL's and more from those JS files which could be interesting like S3 bucket is open to read/write, or subdomain takeover and similar case for cloudfront.
+
+
+## Cloud Storage Services Supported:
+SubDomainizer can find URL's for following cloud storage services:
+```
+1. Amazon AWS services (cloudfront and S3 buckets)
+2. Digitalocean spaces 
+3. Microsoft Azure 
+4. Google Cloud Services 
+5. Dreamhost 
+6. RackCDN. 
+```
 
 ## Screenshot:
 
@@ -34,6 +46,7 @@ Short Form    | Long Form     | Description
 -o            | --output      | Output file name in which you need to save the results.
 -c            | --cookie      | Cookies which needs to be sent with request.
 -h            | --help        | show the help message and exit.
+-cop          | --cloudop     | Give file name in which you need to store cloud services results.
 
 ### Examples
 * To list help about the tool:
