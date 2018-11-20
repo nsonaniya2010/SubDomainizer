@@ -7,7 +7,6 @@
 #    Medium: neerajedwards            #
 #    Email: nsonaniya2010@gmail.com   #
 #######################################
-
 import termcolor
 import argparse
 from bs4 import BeautifulSoup
@@ -90,7 +89,7 @@ class JsExtract:
             html = req.content.decode(decoding)
             soup = BeautifulSoup(html, features='html.parser')
             for link in soup.find_all('script'):
-                if link.get('src') != None and link.get('src').endswith('.js'):
+                if link.get('src') != None:
                     if link.get('src').startswith('https://' + domain) or link.get('src').startswith(
                             'http://' + domain):
                         jsLinkList.append(link.get('src'))
