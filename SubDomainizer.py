@@ -84,12 +84,13 @@ class JsExtract:
                             'http://' + domain):
                         jsLinkList.append(link.get('src'))
                     elif link.get('src').startswith('http'):
+                        print(link.get('src'))
                         jsLinkList.append(link.get('src'))
                     else:
-                        if url.startswith('https'):
-                            jsLinkList.append('https://' + domain + link.get('src'))
-                        else:
-                            jsLinkList.append('http://' + domain + link.get('src'))
+                        x = url.split('/')
+                        text = "/".join(x[:-1])
+                        text = text + '/'
+                        jsLinkList.append(text + link.get('src'))
             print(
                 termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
@@ -133,7 +134,7 @@ def getSubdomainsfromFile(filesname, url):
     s3bucketafter = re.compile(r'(s3\.amazonaws\.com/[\w-]+)', re.IGNORECASE)
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
-    gsreg2 = re.compile(r'([\w\-.]*.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg3 = re.compile(r'([\w\-.]*.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg4 = re.compile(r'([\w\-.]*.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg5 = re.compile(r'([\w\-.]*.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
@@ -152,7 +153,7 @@ def getSubdomainsfromFile(filesname, url):
 
     for file in filesname:
         for x in cloudlist:
-            for item in x.findall(file):
+            for item in x.findall(str(file)):
                 cloudurlset.add(item)
 
         for subdomain in regex.findall(file):
