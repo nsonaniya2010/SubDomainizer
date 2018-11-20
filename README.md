@@ -71,6 +71,16 @@ python3 SubDomainizer.py -u https://www.example.com -o output.txt
 python3 SubDomainizer.py -u https://www.example.com -c "test=1; test=2"
 ```
 
+## Difference in results (with cookies and without cookies on facebook.com):
+
+Results before using facebook cookies in SubDomainizer:
+
+![BeforeCookies](https://i.imgur.com/v7igAId.png)
+
+Results after using facebook cookies in SubDomainizer:
+
+![AfterCookies](https://i.imgur.com/QKY09mx.png)
+
 ## License
 This tools is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
 
