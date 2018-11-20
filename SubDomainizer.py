@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+################
+# Author: Neeraj Sonaniya
+# Twitter: neeraj_sonaniya
+# Linkedin: neerajsonaniya
+# Facebook: neeraj.sonaniya
+# Medium: neerajedwards
+# Email: nsonaniya2010@gmail.com
+################
+
 import termcolor
 import argparse
 from bs4 import BeautifulSoup
@@ -131,7 +140,7 @@ def getSubdomainsfromFile(filesname, url):
 
     #cloud services regex:
     cfreg = re.compile(r'([\w]+.cloudfront\.net)', re.IGNORECASE)
-    s3bucketreg = re.compile(r'([\w-]+\.s3\.amazonaws\.com)', re.IGNORECASE)
+    s3bucketreg = re.compile(r'([\w\-.]+\.s3\.amazonaws\.com)', re.IGNORECASE)
     s3bucketafter = re.compile(r'(s3\.amazonaws\.com/[\w-]+)', re.IGNORECASE)
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
