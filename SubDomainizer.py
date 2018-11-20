@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-################
-# Author: Neeraj Sonaniya
-# Twitter: neeraj_sonaniya
-# Linkedin: neerajsonaniya
-# Facebook: neeraj.sonaniya
-# Medium: neerajedwards
-# Email: nsonaniya2010@gmail.com
-################
+#######################################
+#    Author: Neeraj Sonaniya          #
+#    Twitter: neeraj_sonaniya         #
+#    Linkedin: neerajsonaniya         #
+#    Facebook: neeraj.sonaniya        #
+#    Medium: neerajedwards            #
+#    Email: nsonaniya2010@gmail.com   #
+#######################################
 
 import termcolor
 import argparse
