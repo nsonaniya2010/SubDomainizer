@@ -22,9 +22,9 @@ listfile = args.listfile
 cloudop = args.cloudop
 
 if args.cookie:
-    heads = {'Cookie' : args.cookie}
+    heads = {'Cookie' : args.cookie, 'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 else:
-    heads=None
+    heads={'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 
 def argerror(urls, listfile):
     if (urls == None and listfile == None) or (urls != None and listfile != None):
@@ -136,9 +136,9 @@ def getSubdomainsfromFile(filesname, url):
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
     gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg3 = re.compile(r'([\w\-.]*\.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg4 = re.compile(r'([\w\-.]*\.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg5 = re.compile(r'([\w\-.]*\.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg3 = re.compile(r'([\w\-.]*.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg4 = re.compile(r'([\w\-.]*.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg5 = re.compile(r'([\w\-.]*.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     azureg1 = re.compile(r'([\w\-.]*\.?1drv\.com/?[\w\-.]*)', re.IGNORECASE)
     azureg2 = re.compile(r'(onedrive.live.com/[\w.\-]+)', re.IGNORECASE)
     azureg3 = re.compile(r'([\w\-.]*\.?blob\.core\.windows\.net/?[\w\-.]*)', re.IGNORECASE)
@@ -226,7 +226,6 @@ if __name__ == "__main__":
         except requests.exceptions.InvalidSchema:
             print("Invalid Schema Provided!")
             sys.exit(1)
-
     saveandprintdomains()
 
     if cloudop:
