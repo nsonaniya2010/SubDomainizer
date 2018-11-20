@@ -10,13 +10,13 @@ import tldextract
 import sys
 
 parse = argparse.ArgumentParser()
-parse.add_argument('-u', '--urls', help="Enter the URL or list of URL in which you want to find (sub)domains.")
-parse.add_argument('-l', '--listfile', help="List file which needs to be scanned for URLs")
+parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
+parse.add_argument('-l', '--listfile', help="List file which contain list of URLs to be scanned for subdomains")
 parse.add_argument('-o', '--output', help="Enter the file name to which you want to save the results.")
 parse.add_argument('-c', '--cookie', help="Cookies which needs to be sent with request. User double quotes if have more than one.")
 
 args = parse.parse_args()
-url = args.urls
+url = args.url
 listfile = args.listfile
 
 if args.cookie:
@@ -42,8 +42,7 @@ def getUrlsFromFile():
 jsLinkList = list()
 jsname = list()
 finalset = set()
-s3bucketset = set()
-cfset = set()
+cloudurlset = set()
 
 finallist = list()
 
@@ -64,7 +63,7 @@ class JsExtract:
             jss = compiledInline.findall(minhtml)
             for js in jss:
                 finallist.append(js)
-            print(termcolor.colored("Successfully got all the Inline Scripts.", color='blue', attrs=['bold']))
+            print(termcolor.colored("Successfully get all the Inline Scripts.", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error.")
 
@@ -114,7 +113,7 @@ def logo():
  | (___  _   _| |__ | |  | | ___  _ __ ___   __ _ _ _ __  _ _______ _ __ 
   \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
   ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
- |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.0                                                                                                                                          
+ |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.1                                                                                                                                          
   Find interesting Subdomains hidden in Inline and External Javascripts  \n"""
 
 
@@ -127,18 +126,35 @@ def getDomain(url):
 def getSubdomainsfromFile(filesname, url):
     print(termcolor.colored("Finding Subdomains of given domain in all Javascript files found...", color='yellow',
                             attrs=['bold']))
-    cfreg = re.compile(r'([\w]+.cloudfront\.net)')
-    s3bucketreg = re.compile(r'([\w-]+\.s3\.amazonaws\.com)')
-    s3bucketafter = re.compile(r'(s3\.amazonaws\.com/[\w-]+)')
-    regex = re.compile(r'([\w.]+\.' + getDomain(url) + ')')
+
+    #cloud services regex:
+    cfreg = re.compile(r'([\w]+.cloudfront\.net)', re.IGNORECASE)
+    s3bucketreg = re.compile(r'([\w-]+\.s3\.amazonaws\.com)', re.IGNORECASE)
+    s3bucketafter = re.compile(r'(s3\.amazonaws\.com/[\w-]+)', re.IGNORECASE)
+    doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
+    gsreg2 = re.compile(r'([\w\-.]*.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg3 = re.compile(r'([\w\-.]*.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg4 = re.compile(r'([\w\-.]*.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg5 = re.compile(r'([\w\-.]*.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    azureg1 = re.compile(r'([\w\-.]*\.?1drv\.com/?[\w\-.]*)', re.IGNORECASE)
+    azureg2 = re.compile(r'(onedrive.live.com/[\w.\-]+)', re.IGNORECASE)
+    azureg3 = re.compile(r'([\w\-.]*\.?blob\.core\.windows\.net/?[\w\-.]*)', re.IGNORECASE)
+    rackcdnreg = re.compile(r'([\w\-.]*\.?rackcdn.com/?[\w\-.]*)', re.IGNORECASE)
+    dreamhostreg1 = re.compile(r'([\w\-.]*\.?objects\.cdn\.dream\.io/?[\w\-.]*)', re.IGNORECASE)
+    dreamhostreg2 = re.compile(r'([\w\-.]*\.?objects-us-west-1.dream.io/?[\w\-.]*)', re.IGNORECASE)
+
+    cloudlist = [cfreg, s3bucketreg, s3bucketafter, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
+                 azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2]
+
+    #domain regex
+    regex = re.compile(r'([\w\-.]+\.' + getDomain(url) + ')', re.IGNORECASE)
 
     for file in filesname:
-        for item in cfreg.findall(file):
-            cfset.add(item)
-        for item in s3bucketreg.findall(file):
-            s3bucketset.add(item)
-        for item in s3bucketafter.findall(file):
-            s3bucketset.add(item)
+        for x in cloudlist:
+            for item in x.findall(file):
+                cloudurlset.add(item)
+
         for subdomain in regex.findall(file):
             finalset.add(subdomain)
     print(termcolor.colored("Got all the important data.\n", color='green',attrs=['bold']))
@@ -153,22 +169,15 @@ def subextractor(url):
 
 
 def saveandprintdomains():
-    print("\n~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
-    if s3bucketset:
-        print(termcolor.colored("Some S3 buckets found. Here are the URLs:\n", color='green', attrs=['bold']))
-        for item in s3bucketset:
-            print(item)
+    print("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+    if cloudurlset:
+        print(termcolor.colored("Some cloud services url's found. They might be interesting, Here are the URLs:\n", color='blue', attrs=['bold']))
+        for item in cloudurlset:
+            print(termcolor.colored(item, color='green', attrs=['bold']))
     else:
-        print(termcolor.colored("No S3 buckets were found.\n", color='red', attrs=['bold']))
+        print(termcolor.colored("No cloud services url were found.\n", color='red', attrs=['bold']))
 
-    if cfset:
-        print(termcolor.colored("Some cloudfront domains found. Here are the URLs:", color='green', attrs=['bold']))
-        for item in cfset:
-            print(termcolor.colored(item, color='blue', attrs=['bold']))
-    else:
-        print(termcolor.colored("No cloudfront domains found.\n", color='red', attrs=['bold']))
-
-    print("\nSuccessfully got all the subdomains...\n")
+    print(termcolor.colored("\nSuccessfully got all the subdomains...\n",color='blue', attrs=['bold'] ))
     for item in finalset:
         print(termcolor.colored(item, color='green', attrs=['bold']))
     if args.output:
