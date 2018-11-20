@@ -12,12 +12,14 @@ import sys
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
 parse.add_argument('-l', '--listfile', help="List file which contain list of URLs to be scanned for subdomains")
-parse.add_argument('-o', '--output', help="Enter the file name to which you want to save the results.")
+parse.add_argument('-o', '--output', help="Enter the file name to which you want to save the results of subdomains found.")
 parse.add_argument('-c', '--cookie', help="Cookies which needs to be sent with request. User double quotes if have more than one.")
+parse.add_argument('-cop', '--cloudop', help ="Enter the file name in which you want to save results of cloud services finding.")
 
 args = parse.parse_args()
 url = args.url
 listfile = args.listfile
+cloudop = args.cloudop
 
 if args.cookie:
     heads = {'Cookie' : args.cookie}
@@ -135,9 +137,9 @@ def getSubdomainsfromFile(filesname, url):
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
     gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg3 = re.compile(r'([\w\-.]*\.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg4 = re.compile(r'([\w\-.]*\.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg5 = re.compile(r'([\w\-.]*\.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg3 = re.compile(r'([\w\-.]*.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg4 = re.compile(r'([\w\-.]*.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg5 = re.compile(r'([\w\-.]*.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     azureg1 = re.compile(r'([\w\-.]*\.?1drv\.com/?[\w\-.]*)', re.IGNORECASE)
     azureg2 = re.compile(r'(onedrive.live.com/[\w.\-]+)', re.IGNORECASE)
     azureg3 = re.compile(r'([\w\-.]*\.?blob\.core\.windows\.net/?[\w\-.]*)', re.IGNORECASE)
@@ -188,6 +190,11 @@ def saveandprintdomains():
                 f.write(item + '\n')
         print("\nWriting Done..\n")
 
+def savecloudresults():
+    with open(cloudop, 'w+') as f:
+        for item in cloudurlset:
+            f.write(item + '\n')
+
 
 def printlogo():
     return termcolor.colored(logo(), color='red', attrs=['bold'])
@@ -222,3 +229,8 @@ if __name__ == "__main__":
             sys.exit(1)
 
     saveandprintdomains()
+
+    if cloudop:
+        print(termcolor.colored("\nWriting all the cloud services URL's to given file...",color='blue', attrs=['bold']))
+        savecloudresults()
+        print(termcolor.colored("Written cloud services URL's in file: ",color='blue', attrs=['bold']) + cloudop + '\n')
