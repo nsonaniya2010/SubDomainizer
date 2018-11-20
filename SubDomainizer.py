@@ -7,6 +7,7 @@
 #    Medium: neerajedwards            #
 #    Email: nsonaniya2010@gmail.com   #
 #######################################
+
 import termcolor
 import argparse
 from bs4 import BeautifulSoup
@@ -28,9 +29,10 @@ args = parse.parse_args()
 url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
+ipv4list = set()
 
 if args.cookie:
-    heads = {'Cookie' : args.cookie, 'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+    heads = {'Cookie' : args.cookie, 'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.1'}
 else:
     heads={'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 
@@ -91,10 +93,12 @@ class JsExtract:
             for link in soup.find_all('script'):
                 if link.get('src') != None:
                     if link.get('src').startswith('https://' + domain) or link.get('src').startswith(
-                            'http://' + domain):
+                            'http://' + domain) :
                         jsLinkList.append(link.get('src'))
                     elif link.get('src').startswith('http'):
                         jsLinkList.append(link.get('src'))
+                    elif link.get('src').startswith('//'):
+                        jsLinkList.append('http:'+link.get('src'))
                     else:
                         x = url.split('/')
                         text = "/".join(x[:-1])
@@ -153,7 +157,7 @@ def getSubdomainsfromFile(filesname, url):
     rackcdnreg = re.compile(r'([\w\-.]*\.?rackcdn.com/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg1 = re.compile(r'([\w\-.]*\.?objects\.cdn\.dream\.io/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg2 = re.compile(r'([\w\-.]*\.?objects-us-west-1.dream.io/?[\w\-.]*)', re.IGNORECASE)
-
+    ipv4reg = re.compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
     cloudlist = [cfreg, s3bucketreg, s3bucketafter, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
                  azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2]
 
@@ -164,7 +168,8 @@ def getSubdomainsfromFile(filesname, url):
         for x in cloudlist:
             for item in x.findall(str(file)):
                 cloudurlset.add(item)
-
+        for ip in ipv4reg.findall(file):
+            ipv4list.add(ip)
         for subdomain in regex.findall(file):
             finalset.add(subdomain)
     print(termcolor.colored("Got all the important data.\n", color='green',attrs=['bold']))
@@ -202,6 +207,11 @@ def savecloudresults():
         for item in cloudurlset:
             f.write(item + '\n')
 
+def ipv4add():
+    print(termcolor.colored("Got Some IPv4 addresses:\n", color='blue', attrs=['bold']))
+    for ip in ipv4list:
+        print(termcolor.colored(ip, color='green', attrs=['bold']))
+
 
 def printlogo():
     return termcolor.colored(logo(), color='red', attrs=['bold'])
@@ -234,7 +244,13 @@ if __name__ == "__main__":
         except requests.exceptions.InvalidSchema:
             print("Invalid Schema Provided!")
             sys.exit(1)
+
     saveandprintdomains()
+    
+    print('\n')
+    
+    if ipv4list:
+        ipv4add()
 
     if cloudop:
         print(termcolor.colored("\nWriting all the cloud services URL's to given file...",color='blue', attrs=['bold']))
