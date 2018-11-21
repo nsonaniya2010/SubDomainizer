@@ -47,6 +47,7 @@ Short Form    | Long Form     | Description
 -c            | --cookie      | Cookies which needs to be sent with request.
 -h            | --help        | show the help message and exit.
 -cop          | --cloudop     | Give file name in which you need to store cloud services results.
+-d            | --domain      | Give TLD (eg. for www.example.com you have to give example.com) to find subdomain for given TLD.
 
 ### Examples
 * To list help about the tool:
