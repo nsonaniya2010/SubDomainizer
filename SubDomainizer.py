@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 #######################################
 #    Author: Neeraj Sonaniya          #
 #    Twitter: neeraj_sonaniya         #
@@ -21,9 +22,12 @@ import sys
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
 parse.add_argument('-l', '--listfile', help="List file which contain list of URLs to be scanned for subdomains")
-parse.add_argument('-o', '--output', help="Enter the file name to which you want to save the results of subdomains found.")
-parse.add_argument('-c', '--cookie', help="Cookies which needs to be sent with request. User double quotes if have more than one.")
-parse.add_argument('-cop', '--cloudop', help ="Enter the file name in which you want to save results of cloud services finding.")
+parse.add_argument('-o', '--output',
+                   help="Enter the file name to which you want to save the results of subdomains found.")
+parse.add_argument('-c', '--cookie',
+                   help="Cookies which needs to be sent with request. User double quotes if have more than one.")
+parse.add_argument('-cop', '--cloudop',
+                   help="Enter the file name in which you want to save results of cloud services finding.")
 
 args = parse.parse_args()
 url = args.url
@@ -32,9 +36,11 @@ cloudop = args.cloudop
 ipv4list = set()
 
 if args.cookie:
-    heads = {'Cookie' : args.cookie, 'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.1'}
+    heads = {'Cookie': args.cookie,
+             'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.1'}
 else:
-    heads={'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+    heads = {'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
+
 
 def argerror(urls, listfile):
     if (urls == None and listfile == None) or (urls != None and listfile != None):
@@ -62,9 +68,9 @@ finallist = list()
 class JsExtract:
     def IntJsExtract(self, url, heads):
         if url.startswith('http'):
-            req = requests.get(url, headers = heads)
+            req = requests.get(url, headers=heads)
         else:
-            req = requests.get('http://' + url, headers = heads)
+            req = requests.get('http://' + url, headers=heads)
         decoding = req.encoding
         print(termcolor.colored("Searching for Inline Javascripts.....", color='yellow', attrs=['bold']))
         try:
@@ -83,9 +89,9 @@ class JsExtract:
         domain = urlparse.urlparse(url).netloc
         print(termcolor.colored("Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
         if url.startswith('http'):
-            req = requests.get(url, headers = heads)
+            req = requests.get(url, headers=heads)
         else:
-            req = requests.get('http://' + url, headers = heads)
+            req = requests.get('http://' + url, headers=heads)
         decoding = req.encoding
         try:
             html = req.content.decode(decoding)
@@ -93,12 +99,12 @@ class JsExtract:
             for link in soup.find_all('script'):
                 if link.get('src') != None:
                     if link.get('src').startswith('https://' + domain) or link.get('src').startswith(
-                            'http://' + domain) :
+                            'http://' + domain):
                         jsLinkList.append(link.get('src'))
                     elif link.get('src').startswith('http'):
                         jsLinkList.append(link.get('src'))
                     elif link.get('src').startswith('//'):
-                        jsLinkList.append('http:'+link.get('src'))
+                        jsLinkList.append('http:' + link.get('src'))
                     else:
                         x = url.split('/')
                         text = "/".join(x[:-1])
@@ -141,10 +147,9 @@ def getSubdomainsfromFile(filesname, url):
     print(termcolor.colored("Finding Subdomains of given domain in all Javascript files found...", color='yellow',
                             attrs=['bold']))
 
-    #cloud services regex:
+    # cloud services regex:
     cfreg = re.compile(r'([\w]+.cloudfront\.net)', re.IGNORECASE)
-    s3bucketreg = re.compile(r'([\w\-.]+\.s3\.amazonaws\.com)', re.IGNORECASE)
-    s3bucketafter = re.compile(r'(s3\.amazonaws\.com/[\w-]+)', re.IGNORECASE)
+    s3bucketreg = re.compile(r'([\w\-.]*s3[\w\-.]*.?amazonaws.com/?[\w\-.]*)', re.IGNORECASE)
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
     gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
@@ -158,10 +163,10 @@ def getSubdomainsfromFile(filesname, url):
     dreamhostreg1 = re.compile(r'([\w\-.]*\.?objects\.cdn\.dream\.io/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg2 = re.compile(r'([\w\-.]*\.?objects-us-west-1.dream.io/?[\w\-.]*)', re.IGNORECASE)
     ipv4reg = re.compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
-    cloudlist = [cfreg, s3bucketreg, s3bucketafter, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
+    cloudlist = [cfreg, s3bucketreg, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
                  azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2]
 
-    #domain regex
+    # domain regex
     regex = re.compile(r'([\w\-.]+\.' + getDomain(url) + ')', re.IGNORECASE)
 
     for file in filesname:
@@ -172,13 +177,13 @@ def getSubdomainsfromFile(filesname, url):
             ipv4list.add(ip)
         for subdomain in regex.findall(file):
             finalset.add(subdomain)
-    print(termcolor.colored("Got all the important data.\n", color='green',attrs=['bold']))
+    print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
 
 
 def subextractor(url):
     jsfile = JsExtract()
-    jsfile.IntJsExtract(url,heads)
-    jsfile.ExtJsExtract(url,heads)
+    jsfile.IntJsExtract(url, heads)
+    jsfile.ExtJsExtract(url, heads)
     jsfile.SaveExtJsContent(jsLinkList)
     getSubdomainsfromFile(finallist, url)
 
@@ -186,13 +191,14 @@ def subextractor(url):
 def saveandprintdomains():
     print("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
     if cloudurlset:
-        print(termcolor.colored("Some cloud services url's found. They might be interesting, Here are the URLs:\n", color='blue', attrs=['bold']))
+        print(termcolor.colored("Some cloud services url's found. They might be interesting, Here are the URLs:\n",
+                                color='blue', attrs=['bold']))
         for item in cloudurlset:
             print(termcolor.colored(item, color='green', attrs=['bold']))
     else:
         print(termcolor.colored("No cloud services url were found.\n", color='red', attrs=['bold']))
 
-    print(termcolor.colored("\nSuccessfully got all the subdomains...\n",color='blue', attrs=['bold'] ))
+    print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
     for item in finalset:
         print(termcolor.colored(item, color='green', attrs=['bold']))
     if args.output:
@@ -202,10 +208,12 @@ def saveandprintdomains():
                 f.write(item + '\n')
         print("\nWriting Done..\n")
 
+
 def savecloudresults():
     with open(cloudop, 'w+') as f:
         for item in cloudurlset:
             f.write(item + '\n')
+
 
 def ipv4add():
     print(termcolor.colored("Got Some IPv4 addresses:\n", color='blue', attrs=['bold']))
@@ -224,7 +232,8 @@ if __name__ == "__main__":
         urllist = getUrlsFromFile()
         if urllist:
             for i in urllist:
-                print(termcolor.colored("Extracting data from internal and external js for url:",color='blue', attrs=['bold'] ))
+                print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
+                                        attrs=['bold']))
                 print(termcolor.colored(i, color='red', attrs=['bold']))
                 try:
                     try:
@@ -239,20 +248,23 @@ if __name__ == "__main__":
             try:
                 subextractor(url)
             except requests.exceptions.ConnectionError:
-                print('An error occured while fetching URL, Might be server is down, or domain does not exist, Please check!')
+                print(
+                    'An error occured while fetching URL, Might be server is down, or domain does not exist, Please check!')
                 sys.exit(1)
         except requests.exceptions.InvalidSchema:
             print("Invalid Schema Provided!")
             sys.exit(1)
 
     saveandprintdomains()
-    
+
     print('\n')
-    
+
     if ipv4list:
         ipv4add()
 
     if cloudop:
-        print(termcolor.colored("\nWriting all the cloud services URL's to given file...",color='blue', attrs=['bold']))
+        print(
+            termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue', attrs=['bold']))
         savecloudresults()
-        print(termcolor.colored("Written cloud services URL's in file: ",color='blue', attrs=['bold']) + cloudop + '\n')
+        print(
+            termcolor.colored("Written cloud services URL's in file: ", color='blue', attrs=['bold']) + cloudop + '\n')
