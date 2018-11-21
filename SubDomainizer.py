@@ -28,16 +28,16 @@ parse.add_argument('-c', '--cookie',
                    help="Cookies which needs to be sent with request. User double quotes if have more than one.")
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
+parse.add_argument('-d','--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
 
 args = parse.parse_args()
 url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
-ipv4list = set()
 
 if args.cookie:
     heads = {'Cookie': args.cookie,
-             'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.1'}
+             'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 else:
     heads = {'User-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
 
@@ -61,7 +61,7 @@ jsLinkList = list()
 jsname = list()
 finalset = set()
 cloudurlset = set()
-
+ipv4list = set()
 finallist = list()
 
 
@@ -111,21 +111,25 @@ class JsExtract:
             html = req.content.decode(decoding)
             soup = BeautifulSoup(html, features='html.parser')
             for link in soup.find_all('script'):
-                if link.get('src') != None:
+                if link.get('src'):
                     if link.get('src').startswith('https://' + domain) or link.get('src').startswith(
                             'http://' + domain):
-                        jsLinkList.append(link.get('src'))
+                        jsLinkList.append(link.get('src').strip())
                     elif link.get('src').startswith('http'):
-                        jsLinkList.append(link.get('src'))
+                        jsLinkList.append(link.get('src').strip())
                     elif link.get('src').startswith('//'):
-                        jsLinkList.append('http:' + link.get('src'))
+                        if url.startswith('https'):
+                            jsLinkList.append('https:' + link.get('src').strip())
+                        else:
+                            jsLinkList.append('http:' + link.get('src').strip())
                     else:
                         x = url.split('/')
                         text = "/".join(x[:-1])
                         text = text + '/'
-                        jsLinkList.append(text + link.get('src'))
-            print(
-                termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
+                        jsLinkList.append(text + link.get('src').strip())
+                else:
+                    pass
+            print(termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error, Exiting...")
             sys.exit(1)
@@ -134,7 +138,7 @@ class JsExtract:
         for js in lst:
             try:
                 req = requests.get(js)
-                content = req.content.decode('utf-8')
+                content = req.text
                 finallist.append(content)
             except:
                 pass
@@ -158,7 +162,7 @@ def getDomain(url):
 
 
 def getSubdomainsfromFile(filesname, url):
-    print(termcolor.colored("Finding Subdomains of given domain in all Javascript files found...", color='yellow',
+    print(termcolor.colored("Finding Subdomains and cloud data of given domain in all Javascript files...", color='yellow',
                             attrs=['bold']))
 
     # cloud services regex:
@@ -177,11 +181,14 @@ def getSubdomainsfromFile(filesname, url):
     dreamhostreg1 = re.compile(r'([\w\-.]*\.?objects\.cdn\.dream\.io/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg2 = re.compile(r'([\w\-.]*\.?objects-us-west-1.dream.io/?[\w\-.]*)', re.IGNORECASE)
     ipv4reg = re.compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+    firebase = re.compile(r'([\w\-.]*\.firebaseio\.com)',re.IGNORECASE)
+
     cloudlist = [cfreg, s3bucketreg, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
-                 azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2]
+                 azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2, firebase]
 
     # domain regex
     regex = re.compile(r'([\w\-.]+\.' + getDomain(url) + ')', re.IGNORECASE)
+
 
     for file in filesname:
         for x in cloudlist:
@@ -191,6 +198,11 @@ def getSubdomainsfromFile(filesname, url):
             ipv4list.add(ip)
         for subdomain in regex.findall(file):
             finalset.add(subdomain)
+        # given domain regex
+        if args.domain:
+            domainreg = re.compile(r'([\w\-.]+\.' + args.domain + ')', re.IGNORECASE)
+            for subdomain in domainreg.findall(file):
+                finalset.add(subdomain)
     print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
 
 
