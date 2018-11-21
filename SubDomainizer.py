@@ -71,8 +71,16 @@ class JsExtract:
             req = requests.get(url, headers=heads)
         else:
             req = requests.get('http://' + url, headers=heads)
+
         decoding = req.encoding
+
+        if decoding:
+            decoding = decoding
+        else:
+            decoding = 'utf-8'
+
         print(termcolor.colored("Searching for Inline Javascripts.....", color='yellow', attrs=['bold']))
+
         try:
             html = req.content.decode(decoding)
             minhtml = htmlmin.minify(html, remove_empty_space=True)
@@ -92,7 +100,13 @@ class JsExtract:
             req = requests.get(url, headers=heads)
         else:
             req = requests.get('http://' + url, headers=heads)
+
         decoding = req.encoding
+        if decoding:
+            decoding = decoding
+        else:
+            decoding = 'utf-8'
+
         try:
             html = req.content.decode(decoding)
             soup = BeautifulSoup(html, features='html.parser')
