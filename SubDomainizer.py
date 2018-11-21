@@ -149,13 +149,13 @@ def getSubdomainsfromFile(filesname, url):
 
     # cloud services regex:
     cfreg = re.compile(r'([\w]+.cloudfront\.net)', re.IGNORECASE)
-    s3bucketreg = re.compile(r'([\w\-.]*s3[\w\-.]*.?amazonaws.com/?[\w\-.]*)', re.IGNORECASE)
+    s3bucketreg = re.compile(r'([\w\-.]*s3[\w\-.]*\.?amazonaws\.com/?[\w\-.]*)', re.IGNORECASE)
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.IGNORECASE)
     gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg3 = re.compile(r'([\w\-.]*.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg4 = re.compile(r'([\w\-.]*.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
-    gsreg5 = re.compile(r'([\w\-.]*.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg3 = re.compile(r'([\w\-.]*\.?storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg4 = re.compile(r'([\w\-.]*\.?content-storage-upload.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
+    gsreg5 = re.compile(r'([\w\-.]*\.?content-storage-download.googleapis.com/?[\w\-.]*)', re.IGNORECASE)
     azureg1 = re.compile(r'([\w\-.]*\.?1drv\.com/?[\w\-.]*)', re.IGNORECASE)
     azureg2 = re.compile(r'(onedrive.live.com/[\w.\-]+)', re.IGNORECASE)
     azureg3 = re.compile(r'([\w\-.]*\.?blob\.core\.windows\.net/?[\w\-.]*)', re.IGNORECASE)
