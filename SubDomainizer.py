@@ -18,6 +18,7 @@ import htmlmin
 import urllib.parse as urlparse
 import tldextract
 import sys
+import socket
 
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
@@ -180,7 +181,8 @@ def getSubdomainsfromFile(filesname, url):
     rackcdnreg = re.compile(r'([\w\-.]*\.?rackcdn.com/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg1 = re.compile(r'([\w\-.]*\.?objects\.cdn\.dream\.io/?[\w\-.]*)', re.IGNORECASE)
     dreamhostreg2 = re.compile(r'([\w\-.]*\.?objects-us-west-1.dream.io/?[\w\-.]*)', re.IGNORECASE)
-    ipv4reg = re.compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+    ipv4reg = re.compile('(([2][5][0-5]\.)|([2][0-4][0-9]\.)|([0-1]?[0-9]?[0-9]\.)){3}'
+                +'(([2][5][0-5])|([2][0-4][0-9])|([0-1]?[0-9]?[0-9]))')
     firebase = re.compile(r'([\w\-.]*\.firebaseio\.com)',re.IGNORECASE)
 
     cloudlist = [cfreg, s3bucketreg, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
@@ -191,13 +193,22 @@ def getSubdomainsfromFile(filesname, url):
 
 
     for file in filesname:
+        #cloud services
         for x in cloudlist:
             for item in x.findall(str(file)):
                 cloudurlset.add(item)
-        for ip in ipv4reg.findall(file):
-            ipv4list.add(ip)
+
+            #ip finding
+            st = file.split(' ')
+            for i in st:
+                match = ipv4reg.search(i)
+                if match:
+                    ipv4list.add(match.group())
+
+            #for subdomains
         for subdomain in regex.findall(file):
             finalset.add(subdomain)
+
         # given domain regex
         if args.domain:
             domainreg = re.compile(r'([\w\-.]+\.' + args.domain + ')', re.IGNORECASE)
