@@ -86,7 +86,7 @@ Results after using facebook cookies in SubDomainizer:
 This tools is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
 
 ## Version
-**Current version is 1.0**
+**Current version is 1.1**
 
 ## Want to Donate?
 Want to donate for the improvement in features and tools? or Liked this tool?
