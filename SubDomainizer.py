@@ -200,19 +200,20 @@ def getSubdomainsfromFile(file, url):
 
         # for subdomains
     for subdomain in regex.findall(file):
-        if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
-            subdomain = subdomain.lstrip('u002f')
-            subdomain = subdomain.lstrip('u002F')
-            finalset.add(subdomain)
-        elif subdomain.startswith('2F') or subdomain.startswith('2f'):
-            if socket.getfqdn(subdomain) != subdomain:
+        if subdomain.endswith(getDomain(url)):
+            if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
+                subdomain = subdomain.lstrip('u002f')
+                subdomain = subdomain.lstrip('u002F')
                 finalset.add(subdomain)
+            elif subdomain.startswith('2F') or subdomain.startswith('2f'):
+                if socket.getfqdn(subdomain) != subdomain:
+                    finalset.add(subdomain)
+                else:
+                    subdomain = subdomain.lstrip('2F')
+                    subdomain = subdomain.lstrip('2f')
+                    finalset.add(subdomain)
             else:
-                subdomain = subdomain.lstrip('2F')
-                subdomain = subdomain.lstrip('2f')
                 finalset.add(subdomain)
-        else:
-            finalset.add(subdomain)
 
     # given domain regex
     if args.domain:
