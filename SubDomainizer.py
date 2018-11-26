@@ -19,6 +19,8 @@ import urllib.parse as urlparse
 import tldextract
 import sys
 import socket
+from multiprocessing.dummy import Pool as ThreadPool
+from itertools import repeat
 
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
@@ -86,10 +88,7 @@ class JsExtract:
             html = req.content.decode(decoding)
             minhtml = htmlmin.minify(html, remove_empty_space=True)
             minhtml = minhtml.replace('\n', '')
-            compiledInline = re.compile(r"<script.*?>(.*?)</script>")
-            jss = compiledInline.findall(minhtml)
-            for js in jss:
-                finallist.append(js)
+            finallist.append(minhtml)
             print(termcolor.colored("Successfully got all the Inline Scripts.", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error.")
@@ -135,8 +134,7 @@ class JsExtract:
             print("Decoding error, Exiting...")
             sys.exit(1)
 
-    def SaveExtJsContent(self, lst):
-        for js in lst:
+    def SaveExtJsContent(self, js):
             try:
                 req = requests.get(js)
                 content = req.text
@@ -162,10 +160,7 @@ def getDomain(url):
     return ext.registered_domain
 
 
-def getSubdomainsfromFile(filesname, url):
-    print(termcolor.colored("Finding Subdomains and cloud data of given domain in all Javascript files...", color='yellow',
-                            attrs=['bold']))
-
+def getSubdomainsfromFile(file, url):
     # cloud services regex:
     cfreg = re.compile(r'([\w]+.cloudfront\.net)', re.IGNORECASE)
     s3bucketreg = re.compile(r'([\w\-.]*s3[\w\-.]*\.?amazonaws\.com/?[\w\-.]*)', re.IGNORECASE)
@@ -191,42 +186,62 @@ def getSubdomainsfromFile(filesname, url):
     # domain regex
     regex = re.compile(r'([\w\-.]+\.' + getDomain(url) + ')', re.IGNORECASE)
 
+    #cloud services
+    for x in cloudlist:
+        for item in x.findall(str(file)):
+            cloudurlset.add(item)
 
-    for file in filesname:
-        #cloud services
-        for x in cloudlist:
-            for item in x.findall(str(file)):
-                cloudurlset.add(item)
+    #ip finding
+    st = file.split(' ')
+    for i in st:
+        match = ipv4reg.search(i)
+        if match:
+            ipv4list.add(match.group())
 
-            #ip finding
-            st = file.split(' ')
-            for i in st:
-                match = ipv4reg.search(i)
-                if match:
-                    ipv4list.add(match.group())
-
-            #for subdomains
-        for subdomain in regex.findall(file):
+        # for subdomains
+    for subdomain in regex.findall(file):
+        if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
+            subdomain = subdomain.lstrip('u002f')
+            subdomain = subdomain.lstrip('u002F')
+            finalset.add(subdomain)
+        elif subdomain.startswith('2F') or subdomain.startswith('2f'):
+            if socket.getfqdn(subdomain) != subdomain:
+                finalset.add(subdomain)
+            else:
+                subdomain = subdomain.lstrip('2F')
+                subdomain = subdomain.lstrip('2f')
+                finalset.add(subdomain)
+        else:
             finalset.add(subdomain)
 
-        # given domain regex
-        if args.domain:
-            domainreg = re.compile(r'([\w\-.]+\.' + args.domain + ')', re.IGNORECASE)
-            for subdomain in domainreg.findall(file):
-                finalset.add(subdomain)
-    print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
+    # given domain regex
+    if args.domain:
+        domainreg = re.compile(r'([\w\-.]+\.' + args.domain + ')', re.IGNORECASE)
+        for subdomain in domainreg.findall(file):
+            finalset.add(subdomain)
 
 
 def subextractor(url):
     jsfile = JsExtract()
     jsfile.IntJsExtract(url, heads)
     jsfile.ExtJsExtract(url, heads)
-    jsfile.SaveExtJsContent(jsLinkList)
-    getSubdomainsfromFile(finallist, url)
+    jsthread = ThreadPool(25)
+    jsthread.map(jsfile.SaveExtJsContent,jsLinkList)
+    jsthread.close()
+    jsthread.join()
+    print(termcolor.colored("Finding Subdomains and cloud data of given domain in all Javascript files...",
+                            color='yellow',
+                            attrs=['bold']))
+    threads = ThreadPool(25)
+
+    threads.starmap(getSubdomainsfromFile,zip(finallist,repeat(url)))
+    threads.close()
+    threads.join()
+    print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
 
 
 def saveandprintdomains():
-    print("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
+    print(termcolor.colored("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",color='red', attrs=['bold']))
     if cloudurlset:
         print(termcolor.colored("Some cloud services url's found. They might be interesting, Here are the URLs:\n",
                                 color='blue', attrs=['bold']))
@@ -255,7 +270,8 @@ def savecloudresults():
 def ipv4add():
     print(termcolor.colored("Got Some IPv4 addresses:\n", color='blue', attrs=['bold']))
     for ip in ipv4list:
-        print(termcolor.colored(ip, color='green', attrs=['bold']))
+        if socket.getfqdn(ip) != ip:
+            print(termcolor.colored(ip + ' - ' + socket.getfqdn(ip), color='green', attrs=['bold']))
 
 
 def printlogo():
@@ -263,45 +279,52 @@ def printlogo():
 
 
 if __name__ == "__main__":
-    print(printlogo())
-    argerror(url, listfile)
-    if listfile:
-        urllist = getUrlsFromFile()
-        if urllist:
-            for i in urllist:
-                print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
-                                        attrs=['bold']))
-                print(termcolor.colored(i, color='red', attrs=['bold']))
-                try:
+    try:
+        print(printlogo())
+        argerror(url, listfile)
+        if listfile:
+            urllist = getUrlsFromFile()
+            if urllist:
+                for i in urllist:
+                    print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
+                                            attrs=['bold']))
+                    print(termcolor.colored(i, color='red', attrs=['bold']))
                     try:
-                        subextractor(i)
-                    except requests.exceptions.ConnectionError:
-                        print('An error occured while fetching URL, Might be URL is wrong, Please check!')
-                except requests.exceptions.InvalidSchema:
-                    print("Invalid Schema Provided!")
-                    sys.exit(1)
-    else:
-        try:
+                        try:
+                            subextractor(i)
+                        except requests.exceptions.ConnectionError:
+                            print('An error occured while fetching URL, Might be URL is wrong, Please check!')
+                    except requests.exceptions.InvalidSchema:
+                        print("Invalid Schema Provided!")
+                        sys.exit(1)
+        else:
             try:
-                subextractor(url)
-            except requests.exceptions.ConnectionError:
-                print(
-                    'An error occured while fetching URL, Might be server is down, or domain does not exist, Please check!')
+                try:
+                    subextractor(url)
+                except requests.exceptions.ConnectionError:
+                    print(
+                        'An error occured while fetching URL, Might be server is down, or domain does not exist, Please check!')
+                    sys.exit(1)
+            except requests.exceptions.InvalidSchema:
+                print("Invalid Schema Provided!")
                 sys.exit(1)
-        except requests.exceptions.InvalidSchema:
-            print("Invalid Schema Provided!")
-            sys.exit(1)
 
-    saveandprintdomains()
+        saveandprintdomains()
 
-    print('\n')
+        print('\n')
 
-    if ipv4list:
-        ipv4add()
+        if ipv4list:
+            ipv4add()
 
-    if cloudop:
-        print(
-            termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue', attrs=['bold']))
-        savecloudresults()
-        print(
-            termcolor.colored("Written cloud services URL's in file: ", color='blue', attrs=['bold']) + cloudop + '\n')
+        if cloudop:
+            print(
+                termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue', attrs=['bold']))
+            savecloudresults()
+            print(
+                termcolor.colored("Written cloud services URL's in file: ", color='blue', attrs=['bold']) + cloudop + '\n')
+    except KeyboardInterrupt:
+        print(termcolor.colored("\nKeyboard Interrupt. Exiting...\n", color='red', attrs=['bold']))
+        sys.exit(1)
+    except FileNotFoundError:
+        print(termcolor.colored("\nFile Not found, Please check filename. Exiting...\n", color='yellow', attrs=['bold']))
+        sys.exit(1)
