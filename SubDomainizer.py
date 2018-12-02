@@ -32,6 +32,7 @@ parse.add_argument('-c', '--cookie',
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
 parse.add_argument('-d','--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
+parse.add_argument('-pip', '--printip',help='Print IP address of corresponding subdomain.')
 
 args = parse.parse_args()
 url = args.url
@@ -212,6 +213,13 @@ def getSubdomainsfromFile(file, url):
                     subdomain = subdomain.lstrip('2F')
                     subdomain = subdomain.lstrip('2f')
                     finalset.add(subdomain)
+            elif subdomain.startswith('252F') or subdomain.startswith('252f'):
+                if socket.getfqdn(subdomain) != subdomain:
+                    finalset.add(subdomain)
+                else:
+                    subdomain = subdomain.lstrip('252F')
+                    subdomain = subdomain.lstrip('252f')
+                    finalset.add(subdomain)
             else:
                 finalset.add(subdomain)
 
@@ -219,7 +227,27 @@ def getSubdomainsfromFile(file, url):
     if args.domain:
         domainreg = re.compile(r'([\w\-.]+\.' + args.domain + ')', re.IGNORECASE)
         for subdomain in domainreg.findall(file):
-            finalset.add(subdomain)
+            if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
+                subdomain = subdomain.lstrip('u002f')
+                subdomain = subdomain.lstrip('u002F')
+                finalset.add(subdomain)
+            elif subdomain.startswith('2F') or subdomain.startswith('2f'):
+                if socket.getfqdn(subdomain) != subdomain:
+                    finalset.add(subdomain)
+                else:
+                    subdomain = subdomain.lstrip('2F')
+                    subdomain = subdomain.lstrip('2f')
+                    finalset.add(subdomain)
+            elif subdomain.startswith('252F') or subdomain.startswith('252f'):
+                if socket.getfqdn(subdomain) != subdomain:
+                    finalset.add(subdomain)
+                else:
+                    subdomain = subdomain.lstrip('252F')
+                    subdomain = subdomain.lstrip('252f')
+                    finalset.add(subdomain)
+            else:
+                finalset.add(subdomain)
+
 
 
 def subextractor(url):
@@ -252,8 +280,10 @@ def saveandprintdomains():
         print(termcolor.colored("No cloud services url were found.\n", color='red', attrs=['bold']))
 
     print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
+
     for item in finalset:
         print(termcolor.colored(item, color='green', attrs=['bold']))
+
     if args.output:
         print("\nWriting all the subdomains to given file...\n")
         with open(args.output, 'w+') as f:
@@ -267,12 +297,6 @@ def savecloudresults():
         for item in cloudurlset:
             f.write(item + '\n')
 
-
-def ipv4add():
-    print(termcolor.colored("Got Some IPv4 addresses:\n", color='blue', attrs=['bold']))
-    for ip in ipv4list:
-        if socket.getfqdn(ip) != ip:
-            print(termcolor.colored(ip + ' - ' + socket.getfqdn(ip), color='green', attrs=['bold']))
 
 
 def printlogo():
@@ -314,8 +338,16 @@ if __name__ == "__main__":
 
         print('\n')
 
+        iplist = list()
+
         if ipv4list:
-            ipv4add()
+            for ip in ipv4list:
+                if socket.getfqdn(ip) != ip:
+                    iplist.append(termcolor.colored(ip + ' - ' + socket.getfqdn(ip), color='green', attrs=['bold']))
+        if iplist:
+            print(termcolor.colored("Got Some IPv4 addresses:\n", color='blue', attrs=['bold']))
+            for i in iplist:
+                print(i)
 
         if cloudop:
             print(
