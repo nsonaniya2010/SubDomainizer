@@ -32,7 +32,6 @@ parse.add_argument('-c', '--cookie',
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
 parse.add_argument('-d','--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
-parse.add_argument('-pip', '--printip',help='Print IP address of corresponding subdomain.')
 
 args = parse.parse_args()
 url = args.url
