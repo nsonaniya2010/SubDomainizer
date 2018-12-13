@@ -302,7 +302,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url):
     threads.close()
     threads.join()
     print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
-
+    finallist.clear()
 
 def saveandprintdomains():
     print(termcolor.colored("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", color='red',
