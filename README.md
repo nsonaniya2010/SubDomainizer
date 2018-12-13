@@ -13,6 +13,11 @@ SubDomainizer can find URL's for following cloud storage services:
 5. Dreamhost 
 6. RackCDN. 
 ```
+## Secret Key's Searching: (beta)
+SubDomainizer will also find secrets present in content of the page and javascripts files.
+Those secret finding depends on some specific keywords and *Shannon Entropy* formula.
+It might be possible that some secrets which searched by tool is false positive.
+This secret key searching is in beta and later version might have increased accuracy for search results.
 
 ## Screenshot:
 
