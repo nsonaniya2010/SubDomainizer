@@ -42,6 +42,14 @@ sudo apt-get install python3-termcolor python3-bs4 python3-requests python3-html
 ```
 4. Enjoy the Tool.
 
+## Update to latest version:
+
+Use following command to update to latest version:
+
+```
+git pull
+```
+
 ## Usage
 
 Short Form    | Long Form     | Description
