@@ -402,3 +402,4 @@ if __name__ == "__main__":
         print(termcolor.colored("\nI have found some secrets for you (might be false positive):\n", color='blue', attrs=['bold']))
         for item in secretList:
             print(termcolor.colored(item, color='green', attrs=['bold']))
+    print('\n')
