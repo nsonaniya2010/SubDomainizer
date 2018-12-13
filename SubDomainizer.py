@@ -154,7 +154,7 @@ def logo():
   \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
   ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
  |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.3                                                                                                                                          
-  Find interesting Subdomains hidden in Inline and External Javascripts  \n"""
+  Find interesting Subdomains and secrets hidden in page and External Javascripts  \n"""
 
 #https://www.reddit.com/r/dailyprogrammer/comments/4fc896/20160418_challenge_263_easy_calculating_shannon/
 def entropy(s):
