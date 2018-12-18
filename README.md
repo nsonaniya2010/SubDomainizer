@@ -37,8 +37,7 @@ cd SubDomainizer
 3. Install the requirements:
 
 ```
-sudo apt-get update
-sudo apt-get install python3-termcolor python3-bs4 python3-requests python3-htmlmin python3-tldextract
+pip install -r requirements.txt
 ```
 4. Enjoy the Tool.
 
