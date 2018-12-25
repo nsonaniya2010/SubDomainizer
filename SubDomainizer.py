@@ -177,7 +177,7 @@ def PreCompiledRegexSecret():
               'slack_api_token', 'api_token', 'ConsumerKey', 'ConsumerSecret', 'SESSION_TOKEN', 'session_key',
               'session_secret', 'slack_token, slack_secret_token']
 
-    return re.compile(r'(["\']?[a-zA-Z\-_]*(?:' + '|'.join(seclst) + ')[a-zA-Z\-_]*[\s]*["\']?[\s]*[:=>]{1,2}[\s]*["\'](.*?)["\'])',
+    return re.compile(r'(["\']?[a-zA-Z\-_]*(?:' + '|'.join(seclst) + ')[a-zA-Z\-_]*[\s]*["\']?[\s]*[:=>]{1,2}[\s]*["\']?(.*?)["\']?)',
                       re.MULTILINE | re.IGNORECASE)
 
 def PreCompiledRegexCloud():
