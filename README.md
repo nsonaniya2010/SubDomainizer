@@ -1,7 +1,7 @@
-## SubDomainizer
-
-[![Python 3.x](https://img.shields.io/badge/python-3.x-yellow.svg)](https://www.python.org/) 
+[![Python 3.x](https://img.shields.io/badge/python-3.6%7C3.7-yellow.svg)](https://www.python.org/) 
 [![Twitter](https://img.shields.io/badge/twitter-@neeraj_sonaniya-blue.svg)](https://twitter.com/neeraj_sonaniya)
+
+## SubDomainizer
 
 SubDomainizer is a tool designed to find hidden subdomains present is either inline javascript or external javascripts present in the given URL.
 This tool also finds S3 buckets, cloudfront URL's and more from those JS files which could be interesting like S3 bucket is open to read/write, or subdomain takeover and similar case for cloudfront.
