@@ -165,19 +165,34 @@ def getDomain(url):
     ext = tldextract.extract(url)
     return ext.registered_domain
 
+def tldSorting(subdomainList):
+    localsortedlist = list()
+    finallist = list()
+    for item in subdomainList:
+        Reverseddomain = ".".join(item.split('.')[::-1])
+        localsortedlist.append(Reverseddomain)
+
+    sortedlist = sorted(localsortedlist)
+
+    for item in sortedlist:
+        reReverseddomain = ".".join(item.split('.')[::-1])
+        finallist.append(reReverseddomain)
+
+    return finallist
+
 def PreCompiledRegexSecret():
     seclst = ['secret', 'secret_key', 'token', 'secret_token', 'auth_token', 'access_token', 'username', 'password',
               'aws_access_key_id', 'aws_secret_access_key', 'secretkey', 'authtoken', 'accesstoken', 'access-token',
-              'authkey', 'client_secret',
-              'clientsecret', 'client-secret', 'encryption-key', 'encryption_key', 'encryptionkey', 'secretkey',
-              'secret-key',
+              'authkey', 'client_secret','key','pass','bucket','url','uri'
+              'clientsecret', 'client-secret', 'encryption-key', 'pass', 'encryption_key', 'encryptionkey', 'secretkey',
+              'secret-key','bearer',
               'api_key', 'api_secret_key', 'api-key', 'private_key', 'client_key', 'client_id', 'sshkey', 'ssh_key',
               'ssh-key', 'privatekey',
               'private-key', 'private_key', 'consumer_key', 'consumer_secret', 'access_token_secret', 'SLACK_BOT_TOKEN',
               'slack_api_token', 'api_token', 'ConsumerKey', 'ConsumerSecret', 'SESSION_TOKEN', 'session_key',
               'session_secret', 'slack_token, slack_secret_token']
 
-    return re.compile(r'(["\']?[a-zA-Z\-_]*(?:' + '|'.join(seclst) + ')[a-zA-Z\-_]*[\s]*["\']?[\s]*[:=>]{1,2}[\s]*["\'](.*?)["\'])',
+    return re.compile(r'(["\']?[a-zA-Z\-_]*(?:' + '|'.join(seclst) + ')[a-zA-Z\-_]*[\s]*["\']?[\s]*[:=>]{1,2}[\s]*["\']?[\s]*([\w\-/~!@#$*+=]+)[\s]*["\']?)',
                       re.MULTILINE | re.IGNORECASE)
 
 def PreCompiledRegexCloud():
@@ -206,7 +221,7 @@ def PreCompiledRegexCloud():
 
 def PreCompiledRegexDomain(url):
     # domain regex
-    regex = re.compile(r'([\w\-.]+\.' + getDomain(str(url)) + ')', re.IGNORECASE)
+    regex = re.compile(r'([\w][\w\-.]*[\w]\.' + getDomain(str(url)) + ')', re.IGNORECASE)
     return regex
 
 def PreCompiledRegexIP():
@@ -216,7 +231,6 @@ def PreCompiledRegexIP():
     return ipv4reg
 
 def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
-
     # cloud services
     for x in cloudlist:
         for item in x.findall(str(file)):
@@ -317,7 +331,7 @@ def saveandprintdomains():
 
     print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
 
-    for item in finalset:
+    for item in tldSorting(finalset):
         print(termcolor.colored(item, color='green', attrs=['bold']))
 
     if ipv4list:
@@ -348,7 +362,6 @@ if __name__ == "__main__":
 
     compiledRegexCloud = PreCompiledRegexCloud()
     compiledRegexSecretList = PreCompiledRegexSecret()
-    compiledRegexDomain = PreCompiledRegexDomain(url)
     compiledRegexIP = PreCompiledRegexIP()
 
     try:
@@ -358,6 +371,7 @@ if __name__ == "__main__":
             urllist = getUrlsFromFile()
             if urllist:
                 for i in urllist:
+                    compiledRegexDomain = PreCompiledRegexDomain(i)
                     print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
                                             attrs=['bold']))
                     print(termcolor.colored(i, color='red', attrs=['bold']))
@@ -372,6 +386,7 @@ if __name__ == "__main__":
         else:
             try:
                 try:
+                    compiledRegexDomain = PreCompiledRegexDomain(url)
                     subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,compiledRegexIP,url)
                 except requests.exceptions.ConnectionError:
                     print(
