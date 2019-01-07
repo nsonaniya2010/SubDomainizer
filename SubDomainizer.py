@@ -16,6 +16,7 @@ import requests
 import re
 import htmlmin
 import urllib.parse as urlparse
+from urllib.parse import urljoin
 import tldextract
 import sys
 import socket
@@ -115,23 +116,8 @@ class JsExtract:
             soup = BeautifulSoup(html, features='html.parser')
             for link in soup.find_all('script'):
                 if link.get('src'):
-                    if link.get('src').startswith('https://' + domain) or link.get('src').startswith(
-                            'http://' + domain):
-                        jsLinkList.append(link.get('src').strip())
-                    elif link.get('src').startswith('http'):
-                        jsLinkList.append(link.get('src').strip())
-                    elif link.get('src').startswith('//'):
-                        if url.startswith('https'):
-                            jsLinkList.append('https:' + link.get('src').strip())
-                        else:
-                            jsLinkList.append('http:' + link.get('src').strip())
-                    else:
-                        x = url.split('/')
-                        text = "/".join(x[:-1])
-                        text = text + '/'
-                        jsLinkList.append(text + link.get('src').strip())
-                else:
-                    pass
+                    text = urljoin(url,link.get('src'))
+                    jsLinkList.append(text)
             print(termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error, Exiting...")
@@ -183,7 +169,7 @@ def tldSorting(subdomainList):
 def PreCompiledRegexSecret():
     seclst = ['secret', 'secret_key', 'token', 'secret_token', 'auth_token', 'access_token', 'username', 'password',
               'aws_access_key_id', 'aws_secret_access_key', 'secretkey', 'authtoken', 'accesstoken', 'access-token',
-              'authkey', 'client_secret','key','pass','bucket','url','uri'
+              'authkey', 'client_secret','key','pass','bucket',
               'clientsecret', 'client-secret', 'encryption-key', 'pass', 'encryption_key', 'encryptionkey', 'secretkey',
               'secret-key','bearer',
               'api_key', 'api_secret_key', 'api-key', 'private_key', 'client_key', 'client_id', 'sshkey', 'ssh_key',
