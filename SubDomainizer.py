@@ -17,6 +17,7 @@ import re
 import htmlmin
 import urllib.parse as urlparse
 from urllib.parse import urljoin
+from urllib.parse import unquote
 import tldextract
 import sys
 import socket
@@ -79,17 +80,10 @@ class JsExtract:
         else:
             req = requests.get('http://' + url, headers=heads)
 
-        decoding = req.encoding
-
-        if decoding:
-            decoding = decoding
-        else:
-            decoding = 'utf-8'
-
         print(termcolor.colored("Searching for Inline Javascripts.....", color='yellow', attrs=['bold']))
 
         try:
-            html = req.content.decode(decoding)
+            html = unquote(req.content.decode('unicode-escape'))
             minhtml = htmlmin.minify(html, remove_empty_space=True)
             minhtml = minhtml.replace('\n', '')
             finallist.append(minhtml)
@@ -98,21 +92,14 @@ class JsExtract:
             print(termcolor.colored("Decoding error...", color='red', attrs=['bold']))
 
     def ExtJsExtract(self, url, heads):
-        domain = urlparse.urlparse(url).netloc
         print(termcolor.colored("Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
         if url.startswith('http'):
             req = requests.get(url, headers=heads)
         else:
             req = requests.get('http://' + url, headers=heads)
 
-        decoding = req.encoding
-        if decoding:
-            decoding = decoding
-        else:
-            decoding = 'utf-8'
-
         try:
-            html = req.content.decode(decoding)
+            html = unquote(req.content.decode('unicode-escape'))
             soup = BeautifulSoup(html, features='html.parser')
             for link in soup.find_all('script'):
                 if link.get('src'):
@@ -125,8 +112,7 @@ class JsExtract:
 
     def SaveExtJsContent(self, js):
         try:
-            req = requests.get(js)
-            content = req.text
+            content = unquote(requests.get(js).content.decode('unicode-escape'))
             finallist.append(content)
         except:
             pass
@@ -207,7 +193,7 @@ def PreCompiledRegexCloud():
 
 def PreCompiledRegexDomain(url):
     # domain regex
-    regex = re.compile(r'([\w][\w\-.]*[\w]\.' + getDomain(str(url)) + ')', re.IGNORECASE)
+    regex = re.compile(r'([0-9a-zA-Z][0-9a-zA-Z\-.]*[0-9a-zA-Z]\.' + getDomain(str(url)) + ')', re.IGNORECASE)
     return regex
 
 def PreCompiledRegexIP():
@@ -230,60 +216,21 @@ def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
     except:
         pass
 
-    st = file.split()
-    for i in st:
-        match = ipv4reg.search(i)
-        if match:
-            ipv4list.add(match.group())
+    # st = file.split()
+    # for i in st:
+    #     match = ipv4reg.search(i)
+    #     if match:
+    #         ipv4list.add(match.group())
 
         # for subdomains
     for subdomain in regex.findall(file):
-        if subdomain.endswith(getDomain(url)):
-            if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
-                subdomain = subdomain.lstrip('u002f')
-                subdomain = subdomain.lstrip('u002F')
-                finalset.add(subdomain)
-            elif subdomain.startswith('2F') or subdomain.startswith('2f'):
-                if socket.getfqdn(subdomain) != subdomain:
-                    finalset.add(subdomain)
-                else:
-                    subdomain = subdomain.lstrip('2F')
-                    subdomain = subdomain.lstrip('2f')
-                    finalset.add(subdomain)
-            elif subdomain.startswith('252F') or subdomain.startswith('252f'):
-                if socket.getfqdn(subdomain) != subdomain:
-                    finalset.add(subdomain)
-                else:
-                    subdomain = subdomain.lstrip('252F')
-                    subdomain = subdomain.lstrip('252f')
-                    finalset.add(subdomain)
-            else:
-                finalset.add(subdomain)
+            finalset.add(subdomain)
 
     # given domain regex
     if args.domain:
-        domainreg = re.compile(r'([\w\-.]*\.?' + args.domain + ')', re.IGNORECASE)
+        domainreg = re.compile(r'([0-9a-zA-Z][0-9a-zA-Z\-.]*[0-9a-zA-Z]\.' + args.domain + ')', re.IGNORECASE)
         for subdomain in domainreg.findall(file):
-            if subdomain.startswith('u002F') or subdomain.startswith('u002f'):
-                subdomain = subdomain.lstrip('u002f')
-                subdomain = subdomain.lstrip('u002F')
-                finalset.add(subdomain)
-            elif subdomain.startswith('2F') or subdomain.startswith('2f'):
-                if socket.getfqdn(subdomain) != subdomain:
-                    finalset.add(subdomain)
-                else:
-                    subdomain = subdomain.lstrip('2F')
-                    subdomain = subdomain.lstrip('2f')
-                    finalset.add(subdomain)
-            elif subdomain.startswith('252F') or subdomain.startswith('252f'):
-                if socket.getfqdn(subdomain) != subdomain:
-                    finalset.add(subdomain)
-                else:
-                    subdomain = subdomain.lstrip('252F')
-                    subdomain = subdomain.lstrip('252f')
-                    finalset.add(subdomain)
-            else:
-                finalset.add(subdomain)
+            finalset.add(subdomain)
 
 
 def subextractor(cloudlist, p, regex, ipv4reg, url):
