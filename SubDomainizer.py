@@ -9,7 +9,10 @@
 #    Email: nsonaniya2010@gmail.com   #
 #######################################
 
+
 import termcolor
+import base64
+import json
 import argparse
 from bs4 import BeautifulSoup
 import requests
@@ -26,6 +29,7 @@ from itertools import repeat
 from collections import Counter
 from math import log2
 
+
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
 parse.add_argument('-l', '--listfile', help="List file which contain list of URLs to be scanned for subdomains")
@@ -36,11 +40,17 @@ parse.add_argument('-c', '--cookie',
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
 parse.add_argument('-d', '--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
+parse.add_argument('-gt','--gittoken', help="Finding subdomains from github")
+parse.add_argument('-g', '--gitscan', help="Give this option if you wants to search for subdomain from github", action='store_true')
+
 
 args = parse.parse_args()
 url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
+gitToken = args.gittoken
+isGit = args.gitscan
+
 
 if args.cookie:
     heads = {'Cookie': args.cookie,
@@ -56,6 +66,12 @@ def argerror(urls, listfile):
     else:
         pass
 
+def gitArgError(gitToken,isGit):
+    if (gitToken == None and isGit != None ) or (gitToken != None and isGit == None):
+        print('Either both \'-g\' and \'-gt\' arguments are required or none required. Exiting...')
+        sys.exit(1)
+    else:
+        pass
 
 def getUrlsFromFile():
     with open(args.listfile, 'rt') as f:
@@ -71,7 +87,6 @@ cloudurlset = set()
 ipv4list = set()
 finallist = list()
 secretList = set()
-
 
 class JsExtract:
     def IntJsExtract(self, url, heads):
@@ -92,19 +107,21 @@ class JsExtract:
             print(termcolor.colored("Decoding error...", color='red', attrs=['bold']))
 
     def ExtJsExtract(self, url, heads):
+        domain = urlparse.urlparse(url).netloc
         print(termcolor.colored("Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
         if url.startswith('http'):
             req = requests.get(url, headers=heads)
         else:
             req = requests.get('http://' + url, headers=heads)
-
         try:
             html = unquote(req.content.decode('unicode-escape'))
             soup = BeautifulSoup(html, features='html.parser')
+
             for link in soup.find_all('script'):
                 if link.get('src'):
-                    text = urljoin(url,link.get('src'))
+                    text = urljoin(url, link.get('src'))
                     jsLinkList.append(text)
+                    jsLinkList.append(text + link.get('src').strip())
             print(termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error, Exiting...")
@@ -120,34 +137,35 @@ class JsExtract:
 
 def logo():
     return """
-   _____       _     _____                        _       _              
-  / ____|     | |   |  __ \                      (_)     (_)             
- | (___  _   _| |__ | |  | | ___  _ __ ___   __ _ _ _ __  _ _______ _ __ 
-  \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
-  ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
- |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.3                                                                                                                                          
-  Find interesting Subdomains and secrets hidden in page and External Javascripts  \n"""
+      _____       _     _____                        _       _              
+     / ____|     | |   |  __ \                      (_)     (_)             
+    | (___  _   _| |__ | |  | | ___  _ __ ___   __ _ _ _ __  _ _______ _ __ 
+     \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
+     ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
+    |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.4                                                                                                                                          
+Find interesting Subdomains and secrets hidden in page, External Javascripts and GitHub  \n"""
 
 #https://www.reddit.com/r/dailyprogrammer/comments/4fc896/20160418_challenge_263_easy_calculating_shannon/
 def entropy(s):
     return -sum(i/len(s) * log2(i/len(s)) for i in Counter(s).values())
 
 def getDomain(url):
-    finalset.add(urlparse.urlparse(url).netloc)
-    ext = tldextract.extract(url)
+    if urlparse.urlparse(url).netloc != '':
+        finalset.add(urlparse.urlparse(url).netloc)
+    ext = tldextract.extract(str(url))
     return ext.registered_domain
 
 def tldSorting(subdomainList):
     localsortedlist = list()
     finallist = list()
     for item in subdomainList:
-        Reverseddomain = ".".join(item.split('.')[::-1])
+        Reverseddomain = ".".join(str(item).split('.')[::-1])
         localsortedlist.append(Reverseddomain)
 
     sortedlist = sorted(localsortedlist)
 
     for item in sortedlist:
-        reReverseddomain = ".".join(item.split('.')[::-1])
+        reReverseddomain = ".".join(str(item).split('.')[::-1])
         finallist.append(reReverseddomain)
 
     return finallist
@@ -155,16 +173,17 @@ def tldSorting(subdomainList):
 def PreCompiledRegexSecret():
     seclst = ['secret', 'secret_key', 'token', 'secret_token', 'auth_token', 'access_token', 'username', 'password',
               'aws_access_key_id', 'aws_secret_access_key', 'secretkey', 'authtoken', 'accesstoken', 'access-token',
-              'authkey', 'client_secret','key','pass','bucket',
+              'authkey', 'client_secret','key','bucket','email','HEROKU_API_KEY','SF_USERNAME','PT_TOKEN','id_dsa',
               'clientsecret', 'client-secret', 'encryption-key', 'pass', 'encryption_key', 'encryptionkey', 'secretkey',
-              'secret-key','bearer',
+              'secret-key','bearer','JEKYLL_GITHUB_TOKEN','HOMEBREW_GITHUB_API_TOKEN',
               'api_key', 'api_secret_key', 'api-key', 'private_key', 'client_key', 'client_id', 'sshkey', 'ssh_key',
-              'ssh-key', 'privatekey',
+              'ssh-key', 'privatekey','DB_USERNAME','oauth_token','irc_pass', 'dbpasswd','xoxa-2','xoxr'
               'private-key', 'private_key', 'consumer_key', 'consumer_secret', 'access_token_secret', 'SLACK_BOT_TOKEN',
               'slack_api_token', 'api_token', 'ConsumerKey', 'ConsumerSecret', 'SESSION_TOKEN', 'session_key',
-              'session_secret', 'slack_token, slack_secret_token']
+              'session_secret', 'slack_token', 'slack_secret_token', 'bot_access_token']
+    equals = ['=',':','=>','=:']
 
-    return re.compile(r'(["\']?[a-zA-Z\-_]*(?:' + '|'.join(seclst) + ')[a-zA-Z\-_]*[\s]*["\']?[\s]*[:=>]{1,2}[\s]*["\']?[\s]*([\w\-/~!@#$*+=]+)[\s]*["\']?)',
+    return re.compile(r'(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' +'|'.join(equals)  + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)',
                       re.MULTILINE | re.IGNORECASE)
 
 def PreCompiledRegexCloud():
@@ -193,7 +212,7 @@ def PreCompiledRegexCloud():
 
 def PreCompiledRegexDomain(url):
     # domain regex
-    regex = re.compile(r'([0-9a-zA-Z][0-9a-zA-Z\-.]*[0-9a-zA-Z]\.' + getDomain(str(url)) + ')', re.IGNORECASE)
+    regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9]\.' + str(getDomain(str(url))) + ')', re.IGNORECASE)
     return regex
 
 def PreCompiledRegexIP():
@@ -203,35 +222,59 @@ def PreCompiledRegexIP():
     return ipv4reg
 
 def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
+
+    file = str(file).replace('\n', ' ')
     # cloud services
     for x in cloudlist:
         for item in x.findall(str(file)):
             cloudurlset.add(item)
 
-    try:
-        matches = p.finditer(file)
-        for matchNum, match in enumerate(matches):
+    matches = p.finditer(str(file))
+    for matchNum, match in enumerate(matches):
             if entropy(match.group(2)) > 3.5:
                 secretList.add(match.group())
-    except:
-        pass
 
-    # st = file.split()
-    # for i in st:
-    #     match = ipv4reg.search(i)
-    #     if match:
-    #         ipv4list.add(match.group())
+    # try:
+    #     st = file.split()
+    #     for i in st:
+    #         match = ipv4reg.search(i)
+    #         if match:
+    #             ipv4list.add(match.group())
+    # except:
+    #     pass
+
 
         # for subdomains
-    for subdomain in regex.findall(file):
-            finalset.add(subdomain)
+    for subdomain in regex.findall(str(file)):
+        finalset.add(subdomain)
 
     # given domain regex
     if args.domain:
-        domainreg = re.compile(r'([0-9a-zA-Z][0-9a-zA-Z\-.]*[0-9a-zA-Z]\.' + args.domain + ')', re.IGNORECASE)
-        for subdomain in domainreg.findall(file):
+        domainreg = re.compile(r'([a-zA-Z0-9][0-9a-zA-Z\-.]*[a-zA-Z0-9]\.' + args.domain + ')', re.IGNORECASE)
+        for subdomain in domainreg.findall(str(file)):
             finalset.add(subdomain)
 
+
+def getUrlsFromData(gitToken, domain):
+    data = requests.get('https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100').content.decode('utf-8')
+    contentApiURLs = set()
+    data = json.loads(data)
+    for item in data['items']:
+        for key, value in item.items():
+            if key == 'url':
+                contentApiURLs.add(value)
+    return contentApiURLs
+
+
+def getGithubData(item):
+    locallist = list()
+    item = item + '&access_token=' + gitToken
+    apiUrlContent = requests.get(item).content.decode('utf-8')
+    jsonData = json.loads(apiUrlContent)
+    data = base64.b64decode(jsonData['content'])
+    data = unquote(str(data, 'utf-8'))
+    locallist.append(str(data.replace('\n',' ')))
+    return locallist
 
 def subextractor(cloudlist, p, regex, ipv4reg, url):
     jsfile = JsExtract()
@@ -248,7 +291,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url):
     threads.starmap(getSubdomainsfromFile, zip(finallist, repeat(cloudlist), repeat(p), repeat(regex),repeat(ipv4reg), repeat(url)))
     threads.close()
     threads.join()
-    print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
+    print(termcolor.colored("Searching completed...",color='blue',attrs=['bold']))
     finallist.clear()
 
 def saveandprintdomains():
@@ -263,10 +306,10 @@ def saveandprintdomains():
         print(termcolor.colored("\nNo cloud services url were found.\n", color='red', attrs=['bold']))
 
     print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
+    print(termcolor.colored("Total Subdomains: "+str(len(finalset)), color='red', attrs=['bold']))
 
     for item in tldSorting(finalset):
         print(termcolor.colored(item, color='green', attrs=['bold']))
-
     if ipv4list:
         print(termcolor.colored("\nGot Some IPv4 addresses:\n", color='blue', attrs=['bold']))
         for ip in ipv4list:
@@ -293,6 +336,7 @@ def printlogo():
 
 if __name__ == "__main__":
 
+    domainSet = set()
     compiledRegexCloud = PreCompiledRegexCloud()
     compiledRegexSecretList = PreCompiledRegexSecret()
     compiledRegexIP = PreCompiledRegexIP()
@@ -300,11 +344,14 @@ if __name__ == "__main__":
     try:
         print(printlogo())
         argerror(url, listfile)
+        if isGit:
+            gitArgError(gitToken,isGit)
         if listfile:
             urllist = getUrlsFromFile()
             if urllist:
                 for i in urllist:
                     compiledRegexDomain = PreCompiledRegexDomain(i)
+                    domainSet.add(str(getDomain(str(i))))
                     print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
                                             attrs=['bold']))
                     print(termcolor.colored(i, color='red', attrs=['bold']))
@@ -320,6 +367,7 @@ if __name__ == "__main__":
             try:
                 try:
                     compiledRegexDomain = PreCompiledRegexDomain(url)
+                    domainSet.add(str(getDomain(str(url))))
                     subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,compiledRegexIP,url)
                 except requests.exceptions.ConnectionError:
                     print(
@@ -328,6 +376,24 @@ if __name__ == "__main__":
             except requests.exceptions.InvalidSchema:
                 print("Invalid Schema Provided!")
                 sys.exit(1)
+
+        if gitToken and isGit:
+            for item in domainSet:
+                compiledRegexDomain = PreCompiledRegexDomain(item)
+                print(termcolor.colored('Finding Subdomains and secrets from Github..Please wait...', color='yellow',
+                                        attrs=['bold']))
+                print(termcolor.colored('Searching in github for : '+ termcolor.colored(item,color='green',attrs=['bold']), color='blue', attrs=['bold']))
+
+                gitThread = ThreadPool(200)
+                contentApiURLs = getUrlsFromData(gitToken, str(item))
+                gitHublist = gitThread.map(getGithubData, contentApiURLs)
+                gitContentThread = ThreadPool(200)
+
+                for ghitem in gitHublist:
+                    gitContentThread.starmap(getSubdomainsfromFile,zip(ghitem, repeat(compiledRegexCloud), repeat(compiledRegexSecretList), repeat(compiledRegexDomain), repeat(compiledRegexIP), repeat(item)))
+                print(termcolor.colored('Completed finding from github...', color='blue',attrs=['bold']))
+
+        print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
 
         saveandprintdomains()
 
