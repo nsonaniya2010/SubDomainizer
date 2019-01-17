@@ -3,7 +3,7 @@
 
 ## SubDomainizer
 
-SubDomainizer is a tool designed to find hidden subdomains present is either inline javascript or external javascripts present in the given URL.
+SubDomainizer is a tool designed to find hidden subdomains and secrets present is either webpage, Github, and external javascripts present in the given URL.
 This tool also finds S3 buckets, cloudfront URL's and more from those JS files which could be interesting like S3 bucket is open to read/write, or subdomain takeover and similar case for cloudfront.
 
 
@@ -64,6 +64,8 @@ Short Form    | Long Form     | Description
 -h            | --help        | show the help message and exit.
 -cop          | --cloudop     | Give file name in which you need to store cloud services results.
 -d            | --domain      | Give TLD (eg. for www.example.com you have to give example.com) to find subdomain for given TLD.
+-g            | --gitscan     | Needed if you want to get things via Github too.
+-gt           | --gittoken    | Github API token is needed, if want to scan (also needed -g also).
 
 ### Examples
 * To list help about the tool:
@@ -86,6 +88,10 @@ python3 SubDomainizer.py -u https://www.example.com -o output.txt
 * To give cookies:
 ```
 python3 SubDomainizer.py -u https://www.example.com -c "test=1; test=2"
+```
+* To scan via github:
+```
+python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_token> -g 
 ```
 
 ## Difference in results (with cookies and without cookies on facebook.com):
