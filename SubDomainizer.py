@@ -129,7 +129,7 @@ class JsExtract:
 
     def SaveExtJsContent(self, js):
         try:
-            content = unquote(requests.get(js).content.decode('unicode-escape'))
+            content = unquote(requests.get(js).content.decode('utf-8'))
             finallist.append(content)
         except:
             pass
