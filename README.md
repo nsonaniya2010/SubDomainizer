@@ -41,7 +41,7 @@ cd SubDomainizer
 3. Install the requirements:
 
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 4. Enjoy the Tool.
 
