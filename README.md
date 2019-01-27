@@ -105,7 +105,7 @@ Results after using facebook cookies in SubDomainizer:
 ![AfterCookies](https://i.imgur.com/QKY09mx.png)
 
 ## License
-This tools is licensed under the GNU GPL license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
+This tools is licensed under the MIT license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
 
 ## Version
 **Current version is 1.4**
