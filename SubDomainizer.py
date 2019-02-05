@@ -28,7 +28,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 from itertools import repeat
 from collections import Counter
 from math import log2
-
+import urllib3
 
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
@@ -42,7 +42,7 @@ parse.add_argument('-cop', '--cloudop',
 parse.add_argument('-d', '--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
 parse.add_argument('-gt','--gittoken', help="Finding subdomains from github")
 parse.add_argument('-g', '--gitscan', help="Give this option if you wants to search for subdomain from github", action='store_true')
-
+parse.add_argument('-k','--nossl',help="Use it when SSL certificate is not verified.",action='store_true')
 
 args = parse.parse_args()
 url = args.url
@@ -50,6 +50,7 @@ listfile = args.listfile
 cloudop = args.cloudop
 gitToken = args.gittoken
 isGit = args.gitscan
+isSSL = args.nossl
 
 
 if args.cookie:
@@ -76,7 +77,8 @@ def gitArgError(gitToken,isGit):
 def getUrlsFromFile():
     with open(args.listfile, 'rt') as f:
         urllst = f.readlines()
-    urllst = [x.strip() for x in urllst]
+    urllst = [x.strip() for x in urllst if x != '']
+    urllst = set(urllst)
     return urllst
 
 
@@ -90,10 +92,16 @@ secretList = set()
 
 class JsExtract:
     def IntJsExtract(self, url, heads):
-        if url.startswith('http'):
-            req = requests.get(url, headers=heads)
+        if url.startswith('http://') or url.startswith('https://'):
+            if isSSL:
+                req = requests.get(url, headers=heads, verify=False)
+            else:
+                req = requests.get(url, headers=heads)
         else:
-            req = requests.get('http://' + url, headers=heads)
+            if isSSL:
+                req = requests.get('http://' + url, headers=heads, verify=False)
+            else:
+                req = requests.get('http://' + url, headers=heads)
 
         print(termcolor.colored("Searching for Inline Javascripts.....", color='yellow', attrs=['bold']))
 
@@ -109,10 +117,16 @@ class JsExtract:
     def ExtJsExtract(self, url, heads):
         domain = urlparse.urlparse(url).netloc
         print(termcolor.colored("Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
-        if url.startswith('http'):
-            req = requests.get(url, headers=heads)
+        if url.startswith('http://') or url.startswith('https://'):
+            if isSSL:
+                req = requests.get(url, headers=heads,verify=False)
+            else:
+                req = requests.get(url, headers=heads)
         else:
-            req = requests.get('http://' + url, headers=heads)
+            if isSSL:
+                req = requests.get('http://' + url, headers=heads,verify=False)
+            else:
+                req = requests.get('http://' + url, headers=heads)
         try:
             html = unquote(req.content.decode('unicode-escape'))
             soup = BeautifulSoup(html, features='html.parser')
@@ -129,8 +143,12 @@ class JsExtract:
 
     def SaveExtJsContent(self, js):
         try:
-            content = unquote(requests.get(js).content.decode('utf-8'))
-            finallist.append(content)
+            if isSSL:
+                content = unquote(requests.get(js, verify=False).content.decode('utf-8'))
+                finallist.append(content)
+            else:
+                content = unquote(requests.get(js).content.decode('utf-8'))
+                finallist.append(content)
         except:
             pass
 
@@ -256,7 +274,7 @@ def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
 
 
 def getUrlsFromData(gitToken, domain):
-    data = requests.get('https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100').content.decode('utf-8')
+    data = requests.get('https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100',verify=False).content.decode('utf-8')
     contentApiURLs = set()
     data = json.loads(data)
     for item in data['items']:
@@ -269,10 +287,10 @@ def getUrlsFromData(gitToken, domain):
 def getGithubData(item):
     locallist = list()
     item = item + '&access_token=' + gitToken
-    apiUrlContent = requests.get(item).content.decode('utf-8')
+    apiUrlContent = requests.get(item,verify=False).content.decode('utf-8')
     jsonData = json.loads(apiUrlContent)
     data = base64.b64decode(jsonData['content'])
-    data = unquote(str(data, 'utf-8'))
+    data = unquote(unquote(str(data,'utf-8')))
     locallist.append(str(data.replace('\n',' ')))
     return locallist
 
@@ -343,6 +361,14 @@ if __name__ == "__main__":
 
     try:
         print(printlogo())
+        # disable insecure ssl warning.
+        if isSSL:
+            print(termcolor.colored("Disabled SSL Certificate Checking...",
+                                    color='green',
+                                    attrs=['bold']))
+
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         argerror(url, listfile)
         if isGit:
             gitArgError(gitToken,isGit)
@@ -371,7 +397,8 @@ if __name__ == "__main__":
                     subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,compiledRegexIP,url)
                 except requests.exceptions.ConnectionError:
                     print(
-                        'An error occured while fetching URL, Might be server is down, or domain does not exist, Please check!')
+                        termcolor.colored('An error occured while fetching URL, one or more of following are possibilities:'
+                                          '\n1. Might be server is down.\n2. SSL certificate issue.\n3. Domain does not exist. \nPlease check properly or try \'-k\' option, to disable SSL certificate verification.',color='yellow',attrs=['bold']))
                     sys.exit(1)
             except requests.exceptions.InvalidSchema:
                 print("Invalid Schema Provided!")
