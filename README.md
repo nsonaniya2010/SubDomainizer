@@ -66,6 +66,7 @@ Short Form    | Long Form     | Description
 -d            | --domain      | Give TLD (eg. for www.example.com you have to give example.com) to find subdomain for given TLD.
 -g            | --gitscan     | Needed if you want to get things via Github too.
 -gt           | --gittoken    | Github API token is needed, if want to scan (also needed -g also).
+-k            | --nossl         |  Use this to bypass the verification of SSL certificate.
 
 ### Examples
 * To list help about the tool:
@@ -92,6 +93,11 @@ python3 SubDomainizer.py -u https://www.example.com -c "test=1; test=2"
 * To scan via github:
 ```
 python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_token> -g 
+```
+
+* No SSL Certificate Verification:
+```
+python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_token> -g  -k
 ```
 
 ## Difference in results (with cookies and without cookies on facebook.com):
