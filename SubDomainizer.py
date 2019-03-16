@@ -18,9 +18,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import htmlmin
-import urllib.parse as urlparse
-from urllib.parse import urljoin
-from urllib.parse import unquote
+from urllib.parse import *
 import tldextract
 import sys
 import socket
@@ -29,6 +27,11 @@ from itertools import repeat
 from collections import Counter
 from math import log2
 import urllib3
+import glob
+import os
+import time
+import warnings
+
 
 parse = argparse.ArgumentParser()
 parse.add_argument('-u', '--url', help="Enter the URL in which you want to find (sub)domains.")
@@ -40,9 +43,12 @@ parse.add_argument('-c', '--cookie',
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
 parse.add_argument('-d', '--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
-parse.add_argument('-gt','--gittoken', help="Finding subdomains from github")
-parse.add_argument('-g', '--gitscan', help="Give this option if you wants to search for subdomain from github", action='store_true')
-parse.add_argument('-k','--nossl',help="Use it when SSL certificate is not verified.",action='store_true')
+parse.add_argument('-gt', '--gittoken', help="Finding subdomains from github")
+parse.add_argument('-g', '--gitscan', help="Give this option if you wants to search for subdomain from github",
+                   action='store_true')
+parse.add_argument('-k', '--nossl', help="Use it when SSL certificate is not verified.", action='store_true')
+parse.add_argument('-f','--folder',help='Folder in which files needs to be scanned.')
+
 
 args = parse.parse_args()
 url = args.url
@@ -51,6 +57,16 @@ cloudop = args.cloudop
 gitToken = args.gittoken
 isGit = args.gitscan
 isSSL = args.nossl
+folderName = args.folder
+
+
+jsLinkList = list()
+jsname = list()
+finalset = set()
+cloudurlset = set()
+ipv4list = set()
+finallist = list()
+secretList = set()
 
 
 if args.cookie:
@@ -62,17 +78,26 @@ else:
 
 def argerror(urls, listfile):
     if (urls == None and listfile == None) or (urls != None and listfile != None):
-        print("Either and atmost one of -u/--url or -l/--listfile argument is required.Exiting...")
+        print("Either and atmost one of -u/--url or -l/--listfile or -f/--folder argument is required.Exiting...")
         sys.exit(1)
     else:
         pass
 
-def gitArgError(gitToken,isGit):
-    if (gitToken == None and isGit != None ) or (gitToken != None and isGit == None):
+
+def gitArgError(gitToken, isGit):
+    if (gitToken == None and isGit != None) or (gitToken != None and isGit == None):
         print('Either both \'-g\' and \'-gt\' arguments are required or none required. Exiting...')
         sys.exit(1)
     else:
         pass
+
+def getRecursiveFolderData(rootfolder):
+    folderDataList = list()
+    for filename in glob.iglob(rootfolder + '**/**', recursive=True):
+        if os.path.isfile(filename):
+            with open(filename, 'r') as file:
+                folderDataList.append(file.read())
+    return folderDataList
 
 def getUrlsFromFile():
     with open(args.listfile, 'rt') as f:
@@ -81,14 +106,6 @@ def getUrlsFromFile():
     urllst = set(urllst)
     return urllst
 
-
-jsLinkList = list()
-jsname = list()
-finalset = set()
-cloudurlset = set()
-ipv4list = set()
-finallist = list()
-secretList = set()
 
 class JsExtract:
     def IntJsExtract(self, url, heads):
@@ -115,16 +132,18 @@ class JsExtract:
             print(termcolor.colored("Decoding error...", color='red', attrs=['bold']))
 
     def ExtJsExtract(self, url, heads):
-        domain = urlparse.urlparse(url).netloc
+
+        domain = urlparse(url).netloc
+
         print(termcolor.colored("Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads,verify=False)
+                req = requests.get(url, headers=heads, verify=False)
             else:
                 req = requests.get(url, headers=heads)
         else:
             if isSSL:
-                req = requests.get('http://' + url, headers=heads,verify=False)
+                req = requests.get('http://' + url, headers=heads, verify=False)
             else:
                 req = requests.get('http://' + url, headers=heads)
         try:
@@ -160,18 +179,21 @@ def logo():
     | (___  _   _| |__ | |  | | ___  _ __ ___   __ _ _ _ __  _ _______ _ __ 
      \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
      ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
-    |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.4                                                                                                                                          
-Find interesting Subdomains and secrets hidden in page, External Javascripts and GitHub  \n"""
+    |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.5                                                                                                                                          
+Find interesting Subdomains and secrets hidden in page, folder, External Javascripts and GitHub  \n"""
 
-#https://www.reddit.com/r/dailyprogrammer/comments/4fc896/20160418_challenge_263_easy_calculating_shannon/
+
+# https://www.reddit.com/r/dailyprogrammer/comments/4fc896/20160418_challenge_263_easy_calculating_shannon/
 def entropy(s):
-    return -sum(i/len(s) * log2(i/len(s)) for i in Counter(s).values())
+    return -sum(i / len(s) * log2(i / len(s)) for i in Counter(s).values())
+
 
 def getDomain(url):
-    if urlparse.urlparse(url).netloc != '':
-        finalset.add(urlparse.urlparse(url).netloc)
+    if urlparse(url).netloc != '':
+        finalset.add(urlparse(url).netloc)
     ext = tldextract.extract(str(url))
     return ext.registered_domain
+
 
 def tldSorting(subdomainList):
     localsortedlist = list()
@@ -188,21 +210,26 @@ def tldSorting(subdomainList):
 
     return finallist
 
+
 def PreCompiledRegexSecret():
     seclst = ['secret', 'secret_key', 'token', 'secret_token', 'auth_token', 'access_token', 'username', 'password',
               'aws_access_key_id', 'aws_secret_access_key', 'secretkey', 'authtoken', 'accesstoken', 'access-token',
-              'authkey', 'client_secret','key','bucket','email','HEROKU_API_KEY','SF_USERNAME','PT_TOKEN','id_dsa',
+              'authkey', 'client_secret', 'key', 'bucket', 'email', 'HEROKU_API_KEY', 'SF_USERNAME', 'PT_TOKEN',
+              'id_dsa',
               'clientsecret', 'client-secret', 'encryption-key', 'pass', 'encryption_key', 'encryptionkey', 'secretkey',
-              'secret-key','bearer','JEKYLL_GITHUB_TOKEN','HOMEBREW_GITHUB_API_TOKEN',
+              'secret-key', 'bearer', 'JEKYLL_GITHUB_TOKEN', 'HOMEBREW_GITHUB_API_TOKEN',
               'api_key', 'api_secret_key', 'api-key', 'private_key', 'client_key', 'client_id', 'sshkey', 'ssh_key',
-              'ssh-key', 'privatekey','DB_USERNAME','oauth_token','irc_pass', 'dbpasswd','xoxa-2','xoxr'
-              'private-key', 'private_key', 'consumer_key', 'consumer_secret', 'access_token_secret', 'SLACK_BOT_TOKEN',
+              'ssh-key', 'privatekey', 'DB_USERNAME', 'oauth_token', 'irc_pass', 'dbpasswd', 'xoxa-2', 'xoxr'
+                                                                                                       'private-key',
+              'private_key', 'consumer_key', 'consumer_secret', 'access_token_secret', 'SLACK_BOT_TOKEN',
               'slack_api_token', 'api_token', 'ConsumerKey', 'ConsumerSecret', 'SESSION_TOKEN', 'session_key',
               'session_secret', 'slack_token', 'slack_secret_token', 'bot_access_token']
-    equals = ['=',':','=>','=:']
+    equals = ['=', ':', '=>', '=:']
 
-    return re.compile(r'(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' +'|'.join(equals)  + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)',
+    return re.compile(r'(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' + '|'.join(
+        equals) + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)',
                       re.MULTILINE | re.IGNORECASE)
+
 
 def PreCompiledRegexCloud():
     # cloud services regex:
@@ -228,19 +255,21 @@ def PreCompiledRegexCloud():
 
     return cloudlist
 
+
 def PreCompiledRegexDomain(url):
     # domain regex
     regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9]\.' + str(getDomain(str(url))) + ')', re.IGNORECASE)
     return regex
 
+
 def PreCompiledRegexIP():
-     # ip finding
+    # ip finding
     ipv4reg = re.compile('(([2][5][0-5]\.)|([2][0-4][0-9]\.)|([0-1]?[0-9]?[0-9]\.)){3}'
-                          + '(([2][5][0-5])|([2][0-4][0-9])|([0-1]?[0-9]?[0-9]))')
+                         + '(([2][5][0-5])|([2][0-4][0-9])|([0-1]?[0-9]?[0-9]))')
     return ipv4reg
 
-def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
 
+def getSubdomainsfromFile(file, cloudlist, p, regex, ipv4reg, url):
     file = str(file).replace('\n', ' ')
     # cloud services
     for x in cloudlist:
@@ -249,8 +278,8 @@ def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
 
     matches = p.finditer(str(file))
     for matchNum, match in enumerate(matches):
-            if entropy(match.group(2)) > 3.5:
-                secretList.add(match.group())
+        if entropy(match.group(2)) > 3.5:
+            secretList.add(match.group())
 
     # try:
     #     st = file.split()
@@ -261,8 +290,7 @@ def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
     # except:
     #     pass
 
-
-        # for subdomains
+    # for subdomains
     for subdomain in regex.findall(str(file)):
         finalset.add(subdomain)
 
@@ -274,7 +302,9 @@ def getSubdomainsfromFile(file, cloudlist, p, regex,ipv4reg, url):
 
 
 def getUrlsFromData(gitToken, domain):
-    data = requests.get('https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100',verify=False).content.decode('utf-8')
+    data = requests.get(
+        'https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100',
+        verify=False).content.decode('utf-8')
     contentApiURLs = set()
     data = json.loads(data)
     for item in data['items']:
@@ -287,12 +317,16 @@ def getUrlsFromData(gitToken, domain):
 def getGithubData(item):
     locallist = list()
     item = item + '&access_token=' + gitToken
-    apiUrlContent = requests.get(item,verify=False).content.decode('utf-8')
-    jsonData = json.loads(apiUrlContent)
-    data = base64.b64decode(jsonData['content'])
-    data = unquote(unquote(str(data,'utf-8')))
-    locallist.append(str(data.replace('\n',' ')))
-    return locallist
+    try:
+        apiUrlContent = requests.get(item, verify=False).content.decode('utf-8')
+        jsonData = json.loads(apiUrlContent)
+        data = base64.b64decode(jsonData['content'])
+        data = unquote(unquote(str(data, 'utf-8')))
+        locallist.append(str(data.replace('\n', ' ')))
+        return locallist
+    except requests.ConnectionError:
+        pass
+
 
 def subextractor(cloudlist, p, regex, ipv4reg, url):
     jsfile = JsExtract()
@@ -306,11 +340,13 @@ def subextractor(cloudlist, p, regex, ipv4reg, url):
                             color='yellow',
                             attrs=['bold']))
     threads = ThreadPool(300)
-    threads.starmap(getSubdomainsfromFile, zip(finallist, repeat(cloudlist), repeat(p), repeat(regex),repeat(ipv4reg), repeat(url)))
+    threads.starmap(getSubdomainsfromFile,
+                    zip(finallist, repeat(cloudlist), repeat(p), repeat(regex), repeat(ipv4reg), repeat(url)))
     threads.close()
     threads.join()
-    print(termcolor.colored("Searching completed...",color='blue',attrs=['bold']))
+    print(termcolor.colored("Searching completed...", color='blue', attrs=['bold']))
     finallist.clear()
+
 
 def saveandprintdomains():
     print(termcolor.colored("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", color='red',
@@ -324,7 +360,7 @@ def saveandprintdomains():
         print(termcolor.colored("\nNo cloud services url were found.\n", color='red', attrs=['bold']))
 
     print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
-    print(termcolor.colored("Total Subdomains: "+str(len(finalset)), color='red', attrs=['bold']))
+    print(termcolor.colored("Total Subdomains: " + str(len(finalset)), color='red', attrs=['bold']))
 
     for item in tldSorting(finalset):
         print(termcolor.colored(item, color='green', attrs=['bold']))
@@ -361,6 +397,10 @@ if __name__ == "__main__":
 
     try:
         print(printlogo())
+
+        # disable unicode-esacpe for string - deprecation warning.
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+
         # disable insecure ssl warning.
         if isSSL:
             print(termcolor.colored("Disabled SSL Certificate Checking...",
@@ -368,70 +408,149 @@ if __name__ == "__main__":
                                     attrs=['bold']))
 
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
-        argerror(url, listfile)
-        if isGit:
-            gitArgError(gitToken,isGit)
-        if listfile:
-            urllist = getUrlsFromFile()
-            if urllist:
-                for i in urllist:
-                    compiledRegexDomain = PreCompiledRegexDomain(i)
-                    domainSet.add(str(getDomain(str(i))))
-                    print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
-                                            attrs=['bold']))
-                    print(termcolor.colored(i, color='red', attrs=['bold']))
-                    try:
-                        try:
-                            subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,compiledRegexIP, i)
-                        except requests.exceptions.ConnectionError:
-                            print('An error occured while fetching URL, Might be URL is wrong, Please check!')
-                    except requests.exceptions.InvalidSchema:
-                        print("Invalid Schema Provided!")
-                        sys.exit(1)
-        else:
-            try:
-                try:
-                    compiledRegexDomain = PreCompiledRegexDomain(url)
-                    domainSet.add(str(getDomain(str(url))))
-                    subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,compiledRegexIP,url)
-                except requests.exceptions.ConnectionError:
-                    print(
-                        termcolor.colored('An error occured while fetching URL, one or more of following are possibilities:'
-                                          '\n1. Might be server is down.\n2. SSL certificate issue.\n3. Domain does not exist. \nPlease check properly or try \'-k\' option, to disable SSL certificate verification.',color='yellow',attrs=['bold']))
-                    sys.exit(1)
-            except requests.exceptions.InvalidSchema:
-                print("Invalid Schema Provided!")
-                sys.exit(1)
 
-        if gitToken and isGit:
-            for item in domainSet:
-                compiledRegexDomain = PreCompiledRegexDomain(item)
-                print(termcolor.colored('Finding Subdomains and secrets from Github..Please wait...', color='yellow',
+        if (folderName and not url and not listfile):
+
+            if isGit:
+                gitArgError(gitToken, isGit)
+
+            print(termcolor.colored("Getting data from folder recursively...", color='yellow',
+                                    attrs=['bold']))
+
+            folderDataList = getRecursiveFolderData(folderName)
+            time.sleep(0.5)
+            print(termcolor.colored("Got whole data from all files...finding secrets in them.", color='blue',
+                                    attrs=['bold']))
+            for data in folderDataList:
+
+                for cloud in compiledRegexCloud:
+                    for item in cloud.findall(str(data.replace('\n',' '))):
+                        cloudurlset.add(item)
+
+
+                matches = compiledRegexSecretList.finditer(str(data.replace('\n',' ')))
+                for matchNum, match in enumerate(matches):
+                    if entropy(match.group(2)) > 3.5:
+                        secretList.add(match.group())
+
+                if args.domain:
+                    compiledRegexDomain = PreCompiledRegexDomain(args.domain)
+                    for subdomain in compiledRegexDomain.findall(str(data.replace('\n',' '))):
+                        finalset.add(subdomain)
+
+            if isGit and args.domain:
+                compiledRegexDomain = PreCompiledRegexDomain(args.domain)
+                domain = str(getDomain(args.domain))
+                print(termcolor.colored('Finding Subdomains and secrets from Github..Please wait...',
+                                        color='yellow',
                                         attrs=['bold']))
-                print(termcolor.colored('Searching in github for : '+ termcolor.colored(item,color='green',attrs=['bold']), color='blue', attrs=['bold']))
+                print(termcolor.colored(
+                    'Searching in github for : ' + termcolor.colored(domain, color='green',
+                                                                     attrs=['bold']), color='blue',
+                    attrs=['bold']))
 
                 gitThread = ThreadPool(200)
-                contentApiURLs = getUrlsFromData(gitToken, str(item))
+                contentApiURLs = getUrlsFromData(gitToken, str(domain))
                 gitHublist = gitThread.map(getGithubData, contentApiURLs)
                 gitContentThread = ThreadPool(200)
 
                 for ghitem in gitHublist:
-                    gitContentThread.starmap(getSubdomainsfromFile,zip(ghitem, repeat(compiledRegexCloud), repeat(compiledRegexSecretList), repeat(compiledRegexDomain), repeat(compiledRegexIP), repeat(item)))
-                print(termcolor.colored('Completed finding from github...', color='blue',attrs=['bold']))
+                    gitContentThread.starmap(getSubdomainsfromFile,
+                                             zip(ghitem, repeat(compiledRegexCloud),
+                                                 repeat(compiledRegexSecretList),
+                                                 repeat(compiledRegexDomain), repeat(compiledRegexIP),
+                                                 repeat(domain)))
+                print(
+                    termcolor.colored('Completed finding from github...', color='blue', attrs=['bold']))
 
-        print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
 
-        saveandprintdomains()
 
-        if cloudop:
-            print(
-                termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue',
-                                  attrs=['bold']))
-            savecloudresults()
-            print(
-                termcolor.colored("\nWritten cloud services URL's in file: ", color='blue',
-                                  attrs=['bold']) + cloudop + '\n')
+            print(termcolor.colored("Got all the important data...", color='green',
+                                      attrs=['bold']))
+
+            print(termcolor.colored('\n----------------------------------Results----------------------------------\n',color='red',attrs=['bold']))
+
+
+            if finalset:
+                print(termcolor.colored("\nSuccessfuly got all the subdomains...\n", color='blue',
+                                        attrs=['bold']))
+                print(termcolor.colored('Total Subdomains: '+str(len(finalset))+'\n', color='red', attrs=['bold']))
+                for item in finalset:
+                    print(termcolor.colored(item, color='green', attrs=['bold']))
+
+
+        else:
+            argerror(url, listfile)
+            if isGit:
+                gitArgError(gitToken, isGit)
+            if listfile:
+                urllist = getUrlsFromFile()
+                if urllist:
+                    for i in urllist:
+                        compiledRegexDomain = PreCompiledRegexDomain(i)
+                        domainSet.add(str(getDomain(str(i))))
+                        print(termcolor.colored("Extracting data from internal and external js for url:", color='blue',
+                                                attrs=['bold']))
+                        print(termcolor.colored(i, color='red', attrs=['bold']))
+                        try:
+                            try:
+                                subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,
+                                             compiledRegexIP, i)
+                            except requests.exceptions.ConnectionError:
+                                print('An error occured while fetching URL, Might be URL is wrong, Please check!')
+                        except requests.exceptions.InvalidSchema:
+                            print("Invalid Schema Provided!")
+                            sys.exit(1)
+            else:
+                try:
+                    try:
+                        compiledRegexDomain = PreCompiledRegexDomain(url)
+                        domainSet.add(str(getDomain(str(url))))
+                        subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain, compiledRegexIP, url)
+                    except requests.exceptions.ConnectionError:
+                        print(
+                            termcolor.colored(
+                                'An error occured while fetching URL, one or more of following are possibilities:'
+                                '\n1. Might be server is down.\n2. SSL certificate issue.\n3. Domain does not exist. \nPlease check properly or try \'-k\' option, to disable SSL certificate verification.',
+                                color='yellow', attrs=['bold']))
+                        sys.exit(1)
+                except requests.exceptions.InvalidSchema:
+                    print("Invalid Schema Provided!")
+                    sys.exit(1)
+
+            if gitToken and isGit:
+                for item in domainSet:
+                    compiledRegexDomain = PreCompiledRegexDomain(item)
+                    print(termcolor.colored('Finding Subdomains and secrets from Github..Please wait...', color='yellow',
+                                            attrs=['bold']))
+                    print(termcolor.colored(
+                        'Searching in github for : ' + termcolor.colored(item, color='green', attrs=['bold']), color='blue',
+                        attrs=['bold']))
+
+                    gitThread = ThreadPool(200)
+                    contentApiURLs = getUrlsFromData(gitToken, str(item))
+                    gitHublist = gitThread.map(getGithubData, contentApiURLs)
+                    gitContentThread = ThreadPool(200)
+
+                    for ghitem in gitHublist:
+                        gitContentThread.starmap(getSubdomainsfromFile,
+                                                 zip(ghitem, repeat(compiledRegexCloud), repeat(compiledRegexSecretList),
+                                                     repeat(compiledRegexDomain), repeat(compiledRegexIP), repeat(item)))
+                    print(termcolor.colored('Completed finding from github...', color='blue', attrs=['bold']))
+
+            print(termcolor.colored("Got all the important data.\n", color='green', attrs=['bold']))
+
+            saveandprintdomains()
+
+            if cloudop:
+                print(
+                    termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue',
+                                      attrs=['bold']))
+                savecloudresults()
+                print(
+                    termcolor.colored("\nWritten cloud services URL's in file: ", color='blue',
+                                      attrs=['bold']) + cloudop + '\n')
+
     except KeyboardInterrupt:
         print(termcolor.colored("\nKeyboard Interrupt. Exiting...\n", color='red', attrs=['bold']))
         sys.exit(1)
@@ -439,8 +558,17 @@ if __name__ == "__main__":
         print(
             termcolor.colored("\nFile Not found, Please check filename. Exiting...\n", color='yellow', attrs=['bold']))
         sys.exit(1)
+
+    if cloudurlset:
+        print(termcolor.colored("\nSome cloud services url's found. They might be interesting, Here are the URLs:\n", color='blue',
+                                attrs=['bold']))
+        for item in cloudurlset:
+            print(termcolor.colored(item, color='green', attrs=['bold']))
+
     if secretList:
-        print(termcolor.colored("\nI have found some secrets for you (might be false positive):\n", color='blue', attrs=['bold']))
+        print(termcolor.colored("\nI have found some secrets for you (might be false positive):\n", color='blue',
+                                attrs=['bold']))
         for item in secretList:
             print(termcolor.colored(item, color='green', attrs=['bold']))
+
     print('\n')
