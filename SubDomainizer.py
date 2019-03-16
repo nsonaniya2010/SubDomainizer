@@ -462,7 +462,9 @@ if __name__ == "__main__":
                                                  repeat(domain)))
                 print(
                     termcolor.colored('Completed finding from github...', color='blue', attrs=['bold']))
-
+            else:
+                print(
+                    termcolor.colored('Not scanned from github as domain not given, use \'-d\' to give domain...', color='red', attrs=['bold']))
 
 
             print(termcolor.colored("Got all the important data...", color='green',
