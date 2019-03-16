@@ -5,7 +5,7 @@
 
 SubDomainizer is a tool designed to find hidden subdomains and secrets present is either webpage, Github, and external javascripts present in the given URL.
 This tool also finds S3 buckets, cloudfront URL's and more from those JS files which could be interesting like S3 bucket is open to read/write, or subdomain takeover and similar case for cloudfront.
-
+It also scans inside given folder which contains your files.
 
 ## Cloud Storage Services Supported:
 SubDomainizer can find URL's for following cloud storage services:
@@ -67,6 +67,7 @@ Short Form    | Long Form     | Description
 -g            | --gitscan     | Needed if you want to get things via Github too.
 -gt           | --gittoken    | Github API token is needed, if want to scan (also needed -g also).
 -k            | --nossl         |  Use this to bypass the verification of SSL certificate.
+-f           | --folder        | Root folder which contains files/folder.
 
 ### Examples
 * To list help about the tool:
@@ -94,10 +95,13 @@ python3 SubDomainizer.py -u https://www.example.com -c "test=1; test=2"
 ```
 python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_token> -g 
 ```
-
 * No SSL Certificate Verification:
 ```
 python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_token> -g  -k
+```
+* Folder Scanning:
+```
+python3 SubDomainizer.py -f /path/to/root/folder/having/files/and/folders/  -d example.com  -gt <github_token> -g  -k
 ```
 
 ## Difference in results (with cookies and without cookies on facebook.com):
