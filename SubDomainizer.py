@@ -96,7 +96,10 @@ def getRecursiveFolderData(rootfolder):
     for filename in glob.iglob(rootfolder + '**/**', recursive=True):
         if os.path.isfile(filename):
             with open(filename, 'r') as file:
-                folderDataList.append(file.read())
+                try:
+                    folderDataList.append(file.read())
+                except UnicodeDecodeError:
+                    pass
     return folderDataList
 
 def getUrlsFromFile():
@@ -302,15 +305,23 @@ def getSubdomainsfromFile(file, cloudlist, p, regex, ipv4reg, url):
 
 
 def getUrlsFromData(gitToken, domain):
-    data = requests.get(
-        'https://api.github.com/search/code?q=' + domain + '&access_token=' + gitToken + '&per_page=100',
-        verify=False).content.decode('utf-8')
+    datas = list()
     contentApiURLs = set()
-    data = json.loads(data)
-    for item in data['items']:
-        for key, value in item.items():
-            if key == 'url':
-                contentApiURLs.add(value)
+
+    datas.append(requests.get(
+        'https://api.github.com/search/code?q="' + domain + '"&access_token=' + gitToken + '&per_page=100&sort=indexed',
+        verify=False).content.decode('utf-8'))
+    datas.append(requests.get(
+        'https://api.github.com/search/code?q="' + domain + '"&access_token=' + gitToken + '&per_page=100',
+        verify=False).content.decode('utf-8'))
+
+    for data in datas:
+        data = json.loads(data)
+        for item in data['items']:
+            for key, value in item.items():
+                if key == 'url':
+                    contentApiURLs.add(value)
+
     return contentApiURLs
 
 
@@ -351,13 +362,6 @@ def subextractor(cloudlist, p, regex, ipv4reg, url):
 def saveandprintdomains():
     print(termcolor.colored("\n~~~~~~~~~~~~~~~~~~~~~~~RESULTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", color='red',
                             attrs=['bold']))
-    if cloudurlset:
-        print(termcolor.colored("\nSome cloud services url's found. They might be interesting, Here are the URLs:\n",
-                                color='blue', attrs=['bold']))
-        for item in cloudurlset:
-            print(termcolor.colored(item, color='green', attrs=['bold']))
-    else:
-        print(termcolor.colored("\nNo cloud services url were found.\n", color='red', attrs=['bold']))
 
     print(termcolor.colored("\nSuccessfully got all the subdomains...\n", color='blue', attrs=['bold']))
     print(termcolor.colored("Total Subdomains: " + str(len(finalset)), color='red', attrs=['bold']))
