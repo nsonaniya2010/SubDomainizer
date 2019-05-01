@@ -261,7 +261,7 @@ def PreCompiledRegexCloud():
 
 def PreCompiledRegexDomain(url):
     # domain regex
-    regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9]\.' + str(getDomain(str(url))) + ')', re.IGNORECASE)
+    regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9]\.' + str(getDomain(str(url))) + ')', re.IGNORECASE)
     return regex
 
 
@@ -317,10 +317,11 @@ def getUrlsFromData(gitToken, domain):
 
     for data in datas:
         data = json.loads(data)
-        for item in data['items']:
-            for key, value in item.items():
-                if key == 'url':
-                    contentApiURLs.add(value)
+        if 'items' in data:
+            for item in data['items']:
+                for key, value in item.items():
+                    if key == 'url':
+                        contentApiURLs.add(value)
 
     return contentApiURLs
 
