@@ -120,6 +120,10 @@ This tools is licensed under the MIT license. take a look at the [LICENSE](https
 ## Version
 **Current version is 1.4**
 
+## Sources to be implemented
+findsubdomains.com api
+sublist3r api
+
 ## Want to Donate?
 Want to donate for the improvement in features and tools? or Liked this tool?
 [Donate Here](https://paypal.me/BugsByNeeraj)
