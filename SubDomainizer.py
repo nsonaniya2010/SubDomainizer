@@ -157,7 +157,7 @@ class JsExtract:
                 if link.get('src'):
                     text = urljoin(url, link.get('src'))
                     jsLinkList.append(text)
-                    jsLinkList.append(text + link.get('src').strip())
+                    #jsLinkList.append(text + link.get('src').strip())
             print(termcolor.colored("Successfully got all the external js links", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error, Exiting...")
