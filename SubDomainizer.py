@@ -176,14 +176,15 @@ class JsExtract:
 
 
 def logo():
-    return """
+    return r"""
       _____       _     _____                        _       _              
      / ____|     | |   |  __ \                      (_)     (_)             
     | (___  _   _| |__ | |  | | ___  _ __ ___   __ _ _ _ __  _ _______ _ __ 
      \___ \| | | | '_ \| |  | |/ _ \| '_ ` _ \ / _` | | '_ \| |_  / _ \ '__|
      ____) | |_| | |_) | |__| | (_) | | | | | | (_| | | | | | |/ /  __/ |   
     |_____/ \__,_|_.__/|_____/ \___/|_| |_| |_|\__,_|_|_| |_|_/___\___|_|Version 1.5                                                                                                                                          
-Find interesting Subdomains and secrets hidden in page, folder, External Javascripts and GitHub  \n"""
+Find interesting Subdomains and secrets hidden in page, folder, External Javascripts and GitHub 
+"""
 
 
 # https://www.reddit.com/r/dailyprogrammer/comments/4fc896/20160418_challenge_263_easy_calculating_shannon/
@@ -229,8 +230,8 @@ def PreCompiledRegexSecret():
               'session_secret', 'slack_token', 'slack_secret_token', 'bot_access_token']
     equals = ['=', ':', '=>', '=:']
 
-    return re.compile(r'(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' + '|'.join(
-        equals) + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)',
+    return re.compile(r"""(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' + '|'.join(
+        equals) + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)""",
                       re.MULTILINE | re.IGNORECASE)
 
 
@@ -267,8 +268,8 @@ def PreCompiledRegexDomain(url):
 
 def PreCompiledRegexIP():
     # ip finding
-    ipv4reg = re.compile('(([2][5][0-5]\.)|([2][0-4][0-9]\.)|([0-1]?[0-9]?[0-9]\.)){3}'
-                         + '(([2][5][0-5])|([2][0-4][0-9])|([0-1]?[0-9]?[0-9]))')
+    ipv4reg = re.compile("""(([2][5][0-5]\\\\.)|([2][0-4][0-9]\\\\.)|([0-1]?[0-9]?[0-9]\\\\.)){3}"""
+                         + """(([2][5][0-5])|([2][0-4][0-9])|([0-1]?[0-9]?[0-9]))""")
     return ipv4reg
 
 
