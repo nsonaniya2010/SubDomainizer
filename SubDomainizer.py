@@ -230,8 +230,8 @@ def PreCompiledRegexSecret():
               'session_secret', 'slack_token', 'slack_secret_token', 'bot_access_token']
     equals = ['=', ':', '=>', '=:']
 
-    return re.compile(r"""(["\']?[\w-]*(?:' + '|'.join(seclst) + ')[\w-]*[\s]*["\']?[\s]*(?:' + '|'.join(
-        equals) + ')[\s]*["\']?([\w\-/~!@#$%^*+=.]+)["\']?)""",
+    return re.compile(r'(["\']?[\\w\\-]*(?:' + '|'.join(seclst) + ')[\\w\\-]*[\\s]*["\']?[\\s]*(?:' + '|'.join(
+        equals) + ')[\\s]*["\']?([\\w\\-/~!@#$%^*+=.]+)["\']?)',
                       re.MULTILINE | re.IGNORECASE)
 
 
