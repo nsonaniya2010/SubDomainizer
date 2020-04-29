@@ -199,15 +199,15 @@ class JsExtract:
 
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False)
+                req = requests.get(url, headers=heads, verify=False, timeout=15)
             else:
-                req = requests.get(url, headers=heads)
+                req = requests.get(url, headers=heads, timeout=15)
         else:
             if isSSL:
                 req = requests.get(
-                    'http://' + url, headers=heads, verify=False)
+                    'http://' + url, headers=heads, verify=False, timeout=15)
             else:
-                req = requests.get('http://' + url, headers=heads)
+                req = requests.get('http://' + url, headers=heads, timeout=15)
 
         print(termcolor.colored("Searching for Inline Javascripts.....",
                                 color='yellow', attrs=['bold']))
@@ -245,15 +245,15 @@ class JsExtract:
             "Searching for External Javascript links in page.....", color='yellow', attrs=['bold']))
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False)
+                req = requests.get(url, headers=heads, verify=False, timeout=15)
             else:
-                req = requests.get(url, headers=heads)
+                req = requests.get(url, headers=heads, timeout=15)
         else:
             if isSSL:
                 req = requests.get(
-                    'http://' + url, headers=heads, verify=False)
+                    'http://' + url, headers=heads, verify=False, timeout=15)
             else:
-                req = requests.get('http://' + url, headers=heads)
+                req = requests.get('http://' + url, headers=heads, timeout=15)
         try:
             html = unquote(req.content.decode('unicode-escape'))
             soup = BeautifulSoup(html, features='html.parser')
@@ -280,10 +280,10 @@ class JsExtract:
         try:
             if isSSL:
                 content = unquote(requests.get(
-                    js, verify=False).content.decode('utf-8'))
+                    js, verify=False, timeout=15).content.decode('utf-8'))
                 finallist.append(content)
             else:
-                content = unquote(requests.get(js).content.decode('utf-8'))
+                content = unquote(requests.get(js, timeout=15).content.decode('utf-8'))
                 finallist.append(content)
         except:
             pass
@@ -489,7 +489,7 @@ def PreCompiledRegexIP():
     return ipv4reg
 
 
-def getInfoFromData(file, cloudlist, p, regex, ipv4reg, url):
+def getInfoFromData(file_ex, cloudlist, p, regex, ipv4reg, url):
     """
 
     This function is used to call other functions to find secrets, cloud URLs etc.
@@ -509,13 +509,13 @@ def getInfoFromData(file, cloudlist, p, regex, ipv4reg, url):
     url: str
         Original URL from user provided input (URL argument).
     """
-    file = str(file).replace('\n', ' ')
+    file_ex = str(file_ex).replace('\n', ' ')
     # cloud services
     for x in cloudlist:
-        for item in x.findall(str(file)):
+        for item in x.findall(str(file_ex)):
             cloudurlset.add(item)
 
-    matches = p.finditer(str(file))
+    matches = p.finditer(str(file_ex))
     for matchNum, match in enumerate(matches):
         if entropy(match.group(2)) > 3.5:
             secretList.add(match.group())
@@ -530,14 +530,14 @@ def getInfoFromData(file, cloudlist, p, regex, ipv4reg, url):
     #     pass
 
     # for subdomains
-    for subdomain in regex.findall(str(file)):
+    for subdomain in regex.findall(str(file_ex)):
         finalset.add(subdomain)
 
     # given domain regex
     if args.domain:
         domainreg = re.compile(
             r'([a-zA-Z0-9][0-9a-zA-Z\-.]*[a-zA-Z0-9]\.' + args.domain + ')', re.IGNORECASE)
-        for subdomain in domainreg.findall(str(file)):
+        for subdomain in domainreg.findall(str(file_ex)):
             finalset.add(subdomain)
 
 
@@ -561,25 +561,28 @@ def getUrlsFromData(gitToken, domain):
 
     datas = list()
     contentApiURLs = set()
+    git_heads = {'Authorization': 'token ' + gitToken}
+    try:
+        datas.append(requests.get(
+            'https://api.github.com/search/code?q="' + domain +
+            '"&per_page=100&sort=indexed',
+            verify=False, headers = git_heads, timeout=60).content.decode('utf-8'))
+        datas.append(requests.get(
+            'https://api.github.com/search/code?q="' + domain +
+            '"&per_page=100',
+            verify=False, headers = git_heads, timeout=60).content.decode('utf-8'))
+    except:
+        pass
+    else:
+        for data in datas:
+            data = json.loads(data)
+            if 'items' in data:
+                for item in data['items']:
+                    for key, value in item.items():
+                        if key == 'url':
+                            contentApiURLs.add(value)
 
-    datas.append(requests.get(
-        'https://api.github.com/search/code?q="' + domain +
-        '"&access_token=' + gitToken + '&per_page=100&sort=indexed',
-        verify=False).content.decode('utf-8'))
-    datas.append(requests.get(
-        'https://api.github.com/search/code?q="' + domain +
-        '"&access_token=' + gitToken + '&per_page=100',
-        verify=False).content.decode('utf-8'))
-
-    for data in datas:
-        data = json.loads(data)
-        if 'items' in data:
-            for item in data['items']:
-                for key, value in item.items():
-                    if key == 'url':
-                        contentApiURLs.add(value)
-
-    return contentApiURLs
+        return contentApiURLs
 
 
 def getGithubData(item):
@@ -594,17 +597,18 @@ def getGithubData(item):
 
     """
     locallist = list()
-    item = item + '&access_token=' + gitToken
+    git_heads = {'Authorization': 'token ' + gitToken}
     try:
         apiUrlContent = requests.get(
-            item, verify=False).content.decode('utf-8')
+            item, verify=False, headers = git_heads, timeout=60).content.decode('utf-8')
+    except:
+        pass
+    else:
         jsonData = json.loads(apiUrlContent)
         data = base64.b64decode(jsonData['content'])
         data = unquote(unquote(str(data, 'utf-8')))
         locallist.append(str(data.replace('\n', ' ')))
         return locallist
-    except requests.ConnectionError:
-        pass
 
 
 def subextractor(cloudlist, p, regex, ipv4reg, url):
