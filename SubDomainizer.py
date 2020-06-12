@@ -601,14 +601,13 @@ def getGithubData(item):
     try:
         apiUrlContent = requests.get(
             item, verify=False, headers = git_heads, timeout=60).content.decode('utf-8')
-    except:
-        pass
-    else:
         jsonData = json.loads(apiUrlContent)
         data = base64.b64decode(jsonData['content'])
         data = unquote(unquote(str(data, 'utf-8')))
         locallist.append(str(data.replace('\n', ' ')))
         return locallist
+    except:
+        pass
 
 
 def subextractor(cloudlist, p, regex, ipv4reg, url):
@@ -837,9 +836,10 @@ if __name__ == "__main__":
                     gitContentThread = ThreadPool(200)
 
                     for ghitem in gitHublist:
-                        gitContentThread.starmap(getInfoFromData,
-                                                 zip(ghitem, repeat(compiledRegexCloud), repeat(compiledRegexSecretList),
-                                                     repeat(compiledRegexDomain), repeat(compiledRegexIP), repeat(item)))
+                        if ghitem:
+                            gitContentThread.starmap(getInfoFromData,
+                                                     zip(ghitem, repeat(compiledRegexCloud), repeat(compiledRegexSecretList),
+                                                         repeat(compiledRegexDomain), repeat(compiledRegexIP), repeat(item)))
                     print(termcolor.colored(
                         'Completed finding from github...', color='blue', attrs=['bold']))
             if args.output:
