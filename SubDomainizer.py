@@ -531,7 +531,7 @@ def getInfoFromData(file_ex, cloudlist, p, regex, ipv4reg, url):
 
     # for subdomains
     for subdomain in regex.findall(str(file_ex)):
-        finalset.add(subdomain)
+        finalset.add(subdomain.lower().strip())
 
     # given domain regex
     if args.domain:
@@ -605,7 +605,8 @@ def getGithubData(item):
         pass
     else:
         jsonData = json.loads(apiUrlContent)
-        data = base64.b64decode(jsonData['content'])
+        jsonContent = jsonData.get('content') if jsonData.get('content') else "" 
+        data = base64.b64decode(jsonContent)
         data = unquote(unquote(str(data, 'utf-8')))
         locallist.append(str(data.replace('\n', ' ')))
         return locallist
