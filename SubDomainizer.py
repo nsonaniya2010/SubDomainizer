@@ -596,19 +596,16 @@ def getGithubData(item):
         URL pointing to github data related to the given domain.
 
     """
-    locallist = list()
-    git_heads = {'Authorization': 'token ' + gitToken}
     try:
-        apiUrlContent = requests.get(
-            item, verify=False, headers = git_heads, timeout=60).content.decode('utf-8')
-    except:
-        pass
-    else:
-        jsonData = json.loads(apiUrlContent)
-        jsonContent = jsonData.get('content') if jsonData.get('content') else "" 
-        data = base64.b64decode(jsonContent)
-        data = unquote(unquote(str(data, 'utf-8')))
+        locallist = list()
+        git_heads = {'Authorization': 'token ' + gitToken}
+        apiUrlContent = requests.get(item, verify=False, headers = git_heads, timeout=60).json()
+        data_url = apiUrlContent.get('download_url')
+        data = requests.get(data_url, timeout=60, verify=False).text
         locallist.append(str(data.replace('\n', ' ')))
+        return locallist
+    except (json.decoder.JSONDecodeError, requests.exceptions.ReadTimeout):
+        locallist.append("")
         return locallist
 
 
