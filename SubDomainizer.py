@@ -38,6 +38,8 @@ parse.add_argument('-c', '--cookie',
                    help="Cookies which needs to be sent with request. User double quotes if have more than one.")
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
+parse.add_argument('-sop', '--secretop',
+                   help="Enter the file name in which you want to save results of cloud services finding.") 
 parse.add_argument(
     '-d', '--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
 parse.add_argument(
@@ -59,6 +61,7 @@ args = parse.parse_args()
 url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
+secretop = args.secretop
 gitToken = args.gittoken
 isGit = args.gitscan
 isSSL = args.nossl
@@ -682,6 +685,14 @@ def savecloudresults():
         for item in cloudurlset:
             f.write(item + '\n')
 
+def savesecretsresults():
+    """
+    This function will save secret data into the given file.
+    """
+    with open(secretop, 'w+') as f:
+        for item in secretList:
+            f.write(item + '\n')
+
 
 def printlogo():
     """
@@ -894,6 +905,14 @@ if __name__ == "__main__":
                                 str(len(secretList)), color='red', attrs=['bold']))
         for item in secretList:
             print(termcolor.colored(item, color='green', attrs=['bold']))
+        if secretop:
+                print(
+                    termcolor.colored("\nWriting all the secrets to given file...", color='blue',
+                                      attrs=['bold']))
+                savesecretsresults()
+                print(
+                    termcolor.colored("\nWritten secrets in file: ", color='blue',
+                                      attrs=['bold']) + secretop + '\n')
 
     print(termcolor.colored('\n'+'_'*23 + 'End of Results' +
                             '_'*23 + '\n', color='white', attrs=['bold']))
