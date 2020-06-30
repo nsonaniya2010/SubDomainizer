@@ -39,7 +39,7 @@ parse.add_argument('-c', '--cookie',
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
 parse.add_argument('-sop', '--secretop',
-                   help="Enter the file name in which you want to save results of cloud services finding.") 
+                   help="Enter the file name in which you want to save results of secrets found.") 
 parse.add_argument(
     '-d', '--domain', help="Enter the TLD to extract all the subdomain for that TLD.")
 parse.add_argument(
