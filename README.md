@@ -20,12 +20,14 @@ SubDomainizer can find URL's for following cloud storage services:
 ## Secret Key's Searching: (beta)
 SubDomainizer will also find secrets present in content of the page and javascripts files.
 Those secret finding depends on some specific keywords and *Shannon Entropy* formula.
-It might be possible that some secrets which searched by tool is false positive.
+It might be possible that some secrets which searched by tool will be false positive.
 This secret key searching is in beta and later version might have increased accuracy for search results.
 
-## Screenshot:
+## Screenshots:
 
 ![SubDomainizer](https://i.imgur.com/x3XSamk.png)
+
+![Sub2.0](https://i.imgur.com/TvVKabs.png)
 
 ## Installation Steps
 
@@ -66,10 +68,12 @@ Short Form    | Long Form     | Description
 -d            | --domain      | Give TLD (eg. for www.example.com you have to give example.com) to find subdomain for given TLD.
 -g            | --gitscan     | Needed if you want to get things via Github too.
 -gt           | --gittoken    | Github API token is needed, if want to scan (also needed -g also).
--k            | --nossl         |  Use this to bypass the verification of SSL certificate.
--f           | --folder        | Root folder which contains files/folder.
+-k            | --nossl       |  Use this to bypass the verification of SSL certificate.
+-f            | --folder      | Root folder which contains files/folder.
+-san          | --subject_alt_name    |  Find Subject Alternative Names for all found subdomains, Options: 'all', 'same'.
 
-### Examples
+## Examples
+
 * To list help about the tool:
 ```
 python3 SubDomainizer.py -h
@@ -103,6 +107,10 @@ python3 SubDomainizer.py -u https://www.example.com -o output.txt -gt <github_to
 ```
 python3 SubDomainizer.py -f /path/to/root/folder/having/files/and/folders/  -d example.com  -gt <github_token> -g  -k
 ```
+* Subject Alternative Names:
+```
+python3 SubDomainizer.py -u https://www.example -san all
+```
 
 ## Difference in results (with cookies and without cookies on facebook.com):
 
@@ -114,12 +122,15 @@ Results after using facebook cookies in SubDomainizer:
 
 ![AfterCookies](https://i.imgur.com/QKY09mx.png)
 
+
+## Changes:
+In the latest version (2.0) following important features are added:
+1. Find Subject Alternative Names for the found subdomains.
+2. Added where the secrets were found.
+
 ## License
-This tools is licensed under the MIT license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) fore information about it.
+This tools is licensed under the MIT license. take a look at the [LICENSE](https://github.com/nsonaniya2010/SubDomainizer/blob/master/LICENSE) for information about it.
 
-## Version
-**Current version is 1.4**
-
-## Want to Donate?
-Want to donate for the improvement in features and tools? or Liked this tool?
-[Donate Here](https://paypal.me/BugsByNeeraj)
+## Want to Help?
+Want to help if you like features and tools? or Liked this tool?
+[Help Here](https://paypal.me/BugsByNeeraj)
