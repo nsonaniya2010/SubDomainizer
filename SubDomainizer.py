@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 #######################################
 #    Author: Neeraj Sonaniya          #
@@ -39,6 +39,8 @@ parse.add_argument('-c', '--cookie',
                    help="Cookies which needs to be sent with request. User double quotes if have more than one.")
 parse.add_argument('-cop', '--cloudop',
                    help="Enter the file name in which you want to save results of cloud services finding.")
+parse.add_argument('-sop', '--secretop',
+                   help="Enter the file name in which you want to save results of secrets found.") 
 parse.add_argument(
     '-d', '--domain', help="Enter the top-level-domain to extract all the subdomain of that specific domain")
 parse.add_argument(
@@ -60,6 +62,7 @@ args = parse.parse_args()
 url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
+secretop = args.secretop
 gitToken = args.gittoken
 isGit = args.gitscan
 isSSL = args.nossl
@@ -693,6 +696,14 @@ def savecloudresults():
         for item in cloudurlset:
             f.write(item + '\n')
 
+def savesecretsresults():
+    """
+    This function will save secret data into the given file.
+    """
+    with open(secretop, 'w+') as f:
+        for item in secretList:
+            f.write(item + '\n')
+
 
 def printlogo():
     """
@@ -915,6 +926,7 @@ if __name__ == "__main__":
         print(termcolor.colored('_' * 60, color='white', attrs=['bold']))
         print(termcolor.colored("\nFound some secrets(might be false positive)...", color='yellow',
                                 attrs=['bold']))
+                                
         print(termcolor.colored('Total Possible Secrets: ' +
                                 str(sum(len(sec_lst) for sec_lst in secret_dict.values())), color='red',
                                 attrs=['bold']))
