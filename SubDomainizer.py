@@ -701,8 +701,9 @@ def savesecretsresults():
     This function will save secret data into the given file.
     """
     with open(secretop, 'w+') as f:
-        for item in secretList:
-            f.write(item + '\n')
+        for location, secretlst in secret_dict.items():
+            for secret in secretlst:
+                f.write(secret + ' | ' + location + '\n')
 
 
 def printlogo():
@@ -878,17 +879,7 @@ if __name__ == "__main__":
                         pass
                     print(termcolor.colored(
                         'Completed finding from github...', color='blue', attrs=['bold']))
-            if args.output:
-                savedata()
 
-            if cloudop:
-                print(
-                    termcolor.colored("\nWriting all the cloud services URL's to given file...", color='blue',
-                                      attrs=['bold']))
-                savecloudresults()
-                print(
-                    termcolor.colored("\nWritten cloud services URL's in file: ", color='blue',
-                                      attrs=['bold']) + cloudop + '\n')
 
     except KeyboardInterrupt:
         print(termcolor.colored("\nKeyboard Interrupt. Exiting...\n",
@@ -899,10 +890,31 @@ if __name__ == "__main__":
             termcolor.colored("\nFile Not found, Please check filename. Exiting...\n", color='yellow', attrs=['bold']))
         sys.exit(1)
 
-    print(termcolor.colored("Got all the important, printing...\n", color='blue',
+    print(termcolor.colored("Got all the important, printing and/or saving...\n", color='blue',
                             attrs=['bold']))
     print(termcolor.colored('_' * 22 + 'Start of Results' +
                             '_' * 22, color='white', attrs=['bold']))
+
+    if args.output:
+        savedata()
+
+    if cloudop:
+        print(
+            termcolor.colored("\nWriting all the cloud services URL's to given file...", color='yellow',
+                                attrs=['bold']))
+        savecloudresults()
+        print(
+            termcolor.colored("Written cloud services URL's in file: ", color='red',
+                              attrs=['bold']) + cloudop)
+
+    if secretop:
+        print(termcolor.colored("\nWriting all the secrets to given file...", color='yellow', attrs=['bold']))
+        savesecretsresults()
+        print(termcolor.colored("Written secrets in file: ", color='red',
+                                attrs=['bold']) + secretop)
+    
+    print(termcolor.colored('_' * 60, color='white', attrs=['bold']))
+
 
     if finalset:
         print(termcolor.colored("\nGot some subdomains...", color='yellow',
