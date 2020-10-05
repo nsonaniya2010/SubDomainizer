@@ -988,6 +988,8 @@ if __name__ == "__main__":
                                 for (k, v) in ssock.getpeercert()['subjectAltName']:
                                     if v not in q.queue and v.startswith("*.") and v.lstrip('*.') not in finalset:
                                         q.put(v.lstrip('*.'))
+                                    elif v not in q.queue and v not in finalset:
+                                        q.put(v.lstrip('*.'))
                 except (socket.gaierror, socket.timeout, ssl.SSLCertVerificationError, ConnectionRefusedError,
                         ssl.SSLError,
                         OSError):
