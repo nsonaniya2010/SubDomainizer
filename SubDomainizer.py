@@ -753,7 +753,7 @@ if __name__ == "__main__":
                 folderData = dict()
                 totalLength = 1
                 file_name = folderName
-                with open(file_name, 'rt') as file:
+                with open(file_name, 'rt', errors='ignore') as file:
                     try:
                         folderData[file_name] = file.read()
                     except UnicodeDecodeError:
