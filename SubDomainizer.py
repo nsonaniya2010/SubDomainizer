@@ -728,7 +728,7 @@ if __name__ == "__main__":
     try:
         print(printlogo())
 
-        # disable unicode-esacpe for string - deprecation warning.
+        # disable unicode-escape for string - deprecation warning.
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # disable insecure ssl warning.
