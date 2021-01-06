@@ -1,4 +1,4 @@
-[![Python 3.x](https://img.shields.io/badge/python-3.6%7C3.7-yellow.svg)](https://www.python.org/) 
+[![Python 3.x](https://img.shields.io/badge/python-%3E3.5-yellow.svg)](https://www.python.org/) 
 [![Twitter](https://img.shields.io/badge/twitter-@neeraj_sonaniya-blue.svg)](https://twitter.com/neeraj_sonaniya)
 
 ## SubDomainizer
