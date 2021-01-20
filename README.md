@@ -72,6 +72,10 @@ Short Form    | Long Form     | Description
 -f            | --folder      | Root folder which contains files/folder.
 -san          | --subject_alt_name    |  Find Subject Alternative Names for all found subdomains, Options: 'all', 'same'.
 
+## SAN options description:
+* all - This option will find all domains and subdomains.
+* same - This will only find subdomains for specific subdomains.
+
 ## Examples
 
 * To list help about the tool:
