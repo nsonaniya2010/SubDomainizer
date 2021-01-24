@@ -34,6 +34,9 @@ import os
 import time
 import warnings
 
+import colorama
+colorama.init()
+
 parse = argparse.ArgumentParser()
 parse.add_argument('-c', '--cookie',
                    help="Cookies which needs to be sent with request. User double quotes if have more than one.")
