@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #######################################
 #    Author: Neeraj Sonaniya          #
@@ -207,18 +207,16 @@ class JsExtract:
 
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False)
+                req = requests.get(url, headers=heads, verify=False, timeout=(20, 20))
             else:
-                req = requests.get(url, headers=heads)
+                req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
             if isSSL:
-                req = requests.get(
-                    'http://' + url, headers=heads, verify=False)
+                req = requests.get('http://' + url, headers=heads, verify=False, timeout=(20, 20))
             else:
-                req = requests.get('http://' + url, headers=heads)
+                req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
 
-        print(termcolor.colored("Searching for Inline Javascripts...",
-                                color='yellow', attrs=['bold']))
+        print(termcolor.colored("Searching for Inline Javascripts...", color='yellow', attrs=['bold']))
 
         try:
             html = unquote(req.content.decode('unicode-escape'))
@@ -229,8 +227,7 @@ class JsExtract:
             print(termcolor.colored(
                 "Successfully got all the Inline Scripts.", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
-            print(termcolor.colored("Decoding error...",
-                                    color='red', attrs=['bold']))
+            print(termcolor.colored("Decoding error...", color='red', attrs=['bold']))
 
     def ExtJsExtract(self, url, heads):
         """
@@ -254,15 +251,14 @@ class JsExtract:
             "Searching for External Javascript links in page...", color='yellow', attrs=['bold']))
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False)
+                req = requests.get(url, headers=heads, verify=False, timeout=(20,20))
             else:
-                req = requests.get(url, headers=heads)
+                req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
             if isSSL:
-                req = requests.get(
-                    'http://' + url, headers=heads, verify=False)
+                req = requests.get('http://' + url, headers=heads, verify=False, timeout=(20, 20))
             else:
-                req = requests.get('http://' + url, headers=heads)
+                req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
         try:
             html = unquote(req.content.decode('unicode-escape'))
             soup = BeautifulSoup(html, features='html.parser')
@@ -289,11 +285,11 @@ class JsExtract:
         try:
             if isSSL:
                 content = unquote(requests.get(
-                    js, verify=False, headers=heads).content.decode('utf-8'))
+                    js, verify=False, headers=heads, timeout=(20, 20)).content.decode('utf-8'))
                 finallist.append(content)
                 new_final_dict[str(js)] = content
             else:
-                content = unquote(requests.get(js, headers=heads).content.decode('utf-8'))
+                content = unquote(requests.get(js, headers=heads, timeout=(20, 20)).content.decode('utf-8'))
                 finallist.append(content)
                 new_final_dict[str(js)] = content
         except:
@@ -539,15 +535,6 @@ def getInfoFromData(item_url, item_values, cloudlist, p, regex, ipv4reg, url):
             else:
                 secret_dict[item_url] = [str(match.group())]
 
-    # try:
-    #     st = file.split()
-    #     for i in st:
-    #         match = ipv4reg.search(i)
-    #         if match:
-    #             ipv4list.add(match.group())
-    # except:
-    #     pass
-
     # for subdomains
     for subdomain in regex.findall(str(item_values)):
         finalset.add(subdomain.lower())
@@ -581,14 +568,13 @@ def getUrlsFromData(gitToken, domain):
     datas = list()
     contentApiURLs = set()
 
+    headers = {"Authorization": "token " + gitToken}
     datas.append(requests.get(
-        'https://api.github.com/search/code?q="' + domain +
-        '"&access_token=' + gitToken + '&per_page=100&sort=indexed',
-        verify=False, headers=heads).content.decode('utf-8'))
+        'https://api.github.com/search/code?q="'+ domain +'"&per_page=100&sort=indexed',
+        verify=False, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
     datas.append(requests.get(
-        'https://api.github.com/search/code?q="' + domain +
-        '"&access_token=' + gitToken + '&per_page=100',
-        verify=False, headers=heads).content.decode('utf-8'))
+        'https://api.github.com/search/code?q="' + domain +'"&per_page=100',
+        verify=False, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
 
     for data in datas:
         data = json.loads(data)
@@ -612,17 +598,18 @@ def getGithubData(item):
         URL pointing to github data related to the given domain.
 
     """
-    item = item + '&access_token=' + gitToken
+    headers = {"Authorization": "token " + gitToken}
+
     try:
         apiUrlContent = requests.get(
-            item, verify=False).content.decode('utf-8')
+            item, verify=False, timeout=(20, 20), headers=headers).content.decode('utf-8')
         jsonData = json.loads(apiUrlContent)
         _data = base64.b64decode(jsonData['content'])
         _data = unquote(unquote(str(_data, 'utf-8')))
         final_data = str(_data.replace('\n', ' '))
         git_data[jsonData.get('html_url').split("?ref=")[0]] = final_data
 
-    except requests.ConnectionError:
+    except (requests.ConnectionError, requests.exceptions.ReadTimeout):
         pass
 
 
@@ -654,7 +641,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url):
     print(termcolor.colored("Finding secrets, cloud URLs, subdomains in all Javascript files...",
                             color='yellow',
                             attrs=['bold']))
-    threads = ThreadPool(300)
+    threads = ThreadPool(8)
     threads.starmap(getInfoFromData,
                     zip(new_final_dict.keys(), new_final_dict.values(), repeat(cloudlist), repeat(p), repeat(regex),
                         repeat(ipv4reg), repeat(url)))
@@ -672,23 +659,12 @@ def savedata():
 
     """
 
-    # for item in tldSorting(finalset):
-    #     print(termcolor.colored(item, color='green', attrs=['bold']))
-    # if ipv4list:
-    #     print(termcolor.colored("\nGot Some IPv4 addresses:\n",
-    #                             color='blue', attrs=['bold']))
-    #     for ip in ipv4list:
-    #         if socket.getfqdn(ip) != ip:
-    #             print(termcolor.colored(ip + ' - ' + socket.getfqdn(ip),
-    #                                     color='green', attrs=['bold']))
-
     print(termcolor.colored(
         "\nWriting all the subdomains to given file...\n", color='yellow', attrs=['bold']))
     with open(args.output, 'w+') as f:
         for item in tldSorting(finalset):
             f.write(item + '\n')
-    print(termcolor.colored("\nWriting Done..\n",
-                            color='yellow', attrs=['bold']))
+    print(termcolor.colored("\nWriting Done..\n", color='yellow', attrs=['bold']))
 
 
 def savecloudresults():
@@ -789,29 +765,7 @@ if __name__ == "__main__":
                     compiledRegexDomain = PreCompiledRegexDomain(args.domain)
                     for subdomain in compiledRegexDomain.findall(str(data.replace('\n', ' '))):
                         finalset.add(subdomain)
-
-            # if isGit and args.domain:
-            #     compiledRegexDomain = PreCompiledRegexDomain(args.domain)
-            #     domain = str(getDomain(args.domain))
-            #     print(termcolor.colored('Finding Subdomains and secrets from Github..Please wait...',
-            #                             color='yellow',
-            #                             attrs=['bold']))
-            #     print(termcolor.colored(
-            #         'Searching in github for : ' + termcolor.colored(domain, color='green',
-            #                                                          attrs=['bold']), color='blue',
-            #         attrs=['bold']))
-
-            #     gitThread = ThreadPool(200)
-            #     contentApiURLs = getUrlsFromData(gitToken, str(domain))
-            #     gitHublist = gitThread.map(getGithubData, contentApiURLs)
-            #     gitContentThread = ThreadPool(200)
-
-            # for ghitem in gitHublist: gitContentThread.starmap(getInfoFromData, zip(ghitem,
-            # repeat(compiledRegexCloud), repeat( compiledRegexSecretList), repeat(compiledRegexDomain),
-            # repeat( compiledRegexIP), repeat(domain))) print( termcolor.colored('Completed finding from github...',
-            # color='blue', attrs=['bold'])) else: print( termcolor.colored('Not scanned from github as domain not
-            # given, use \'-d\' to give domain...', color='red', attrs=['bold']))
-
+        
         else:
             argerror(url, listfile)
             if isGit:
