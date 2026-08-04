@@ -3,4 +3,5 @@ beautifulsoup4>=4.6.3
 requests>=2.31.0
 tldextract>=3.0.0
 colorama>=0.4.4
-cffi
+pytest>=7.0
+responses>=0.25
