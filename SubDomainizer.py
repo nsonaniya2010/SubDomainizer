@@ -19,7 +19,6 @@ import requests
 import re
 import socket
 import ssl
-import htmlmin
 from urllib.parse import *
 import tldextract
 import sys
@@ -211,7 +210,7 @@ class JsExtract:
 
         try:
             html = unquote(req.content.decode('unicode-escape'))
-            minhtml = htmlmin.minify(html, remove_empty_space=True)
+            minhtml = re.sub(r'\s+', ' ', html).strip()
             minhtml = minhtml.replace('\n', '')
             finallist.append(minhtml)
             new_final_dict["Inline"] = minhtml
