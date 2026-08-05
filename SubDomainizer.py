@@ -255,7 +255,7 @@ class JsExtract:
             else:
                 req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
         try:
-            if 'text/html' in req.headers.get('content-type'):
+            if 'text/html' in req.headers.get('content-type', 'None'):
                 html = unquote(req.content.decode('unicode-escape'))
                 soup = BeautifulSoup(html, features='html.parser')
 
