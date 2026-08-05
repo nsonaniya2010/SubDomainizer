@@ -118,6 +118,79 @@ _CLOUD_SAMPLES = [
     "myworker.workers.dev",
     "mysite.pages.dev",
     "myfiles.rackcdn.com",
+    # AWS additions
+    "myapp.amplifyapp.com",
+    "mydb.cluster-abc123.us-east-1.rds.amazonaws.com",
+    "myendpoint.sagemaker.aws",
+    # GCP additions
+    "maps.googleapis.com",
+    "maps.google.com",
+    "fonts.googleapis.com",
+    "fonts.gstatic.com",
+    "www.googletagmanager.com",
+    "www.google-analytics.com",
+    "analytics.google.com",
+    "translation.googleapis.com",
+    # Azure additions
+    "myapp.azurefd.net",
+    "myvault.vault.azure.net",
+    "dev.azure.com/myorg",
+    "mydb.documents.azure.com",
+    # Hosting additions
+    "myapp.repl.co",
+    "myapp.glitch.me",
+    # CDNs
+    "cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
+    "unpkg.com/react@18.0.0/index.js",
+    "cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js",
+    "myapp.fastly.net",
+    "myapp.akamaihd.net",
+    "myapp.akamaized.net",
+    "myapp.edgekey.net",
+    "myfiles.b-cdn.net",
+    "maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+    "myimages.imgix.net",
+    # Monitoring
+    "o123456.ingest.sentry.io",
+    "myorg.datadoghq.com",
+    "myapp.newrelic.com",
+    "api.segment.io",
+    "api.mixpanel.com",
+    "api2.amplitude.com",
+    "static.hotjar.com",
+    "cdn.logrocket.io",
+    "myorg.grafana.net",
+    # Auth
+    "myapp.auth0.com",
+    "mycompany.okta.com",
+    "clerk.dev",
+    "mycompany.onelogin.com",
+    # Search
+    "myapp-dsn.algolia.net",
+    "myapp.algolianet.com",
+    "myindex.es.io",
+    "myapp.a1.typesense.net",
+    # Database SaaS
+    "mycluster.mongodb.net",
+    "mydb.psdb.cloud",
+    "mydb.neon.tech",
+    "mydb.turso.io",
+    "myredis.upstash.io",
+    # Maps
+    "api.mapbox.com",
+    "geocoder.ls.hereapi.com",
+    "api.here.com",
+    "api.tomtom.com",
+    # Communication
+    "api.twilio.com",
+    "api.sendgrid.com",
+    "api.mailgun.net",
+    "widget.intercom.io",
+    "mycompany.zendesk.com",
+    # Payment
+    "api.stripe.com",
+    "api.razorpay.com",
+    "api.braintreegateway.com",
 ]
 
 
