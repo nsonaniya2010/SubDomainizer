@@ -219,7 +219,7 @@ class JsExtract:
         except UnicodeDecodeError:
             try:
                 html = str(req.content)
-                new_final_dict["Inline"] = html
+                new_final_dict["Inline"] = unquote(html)
             except:
                 print("Error, Exiting...")
                 sys.exit(1)
@@ -384,7 +384,7 @@ def tldSorting(subdomainList):
     return finallist
 
 
-def PreCompiledRegexSecret():
+def pre_compiled_secret_regex():
     """
 
     This function will create list of precompiled regex object to find secret (high entropy strings) within the content.
@@ -395,7 +395,7 @@ def PreCompiledRegexSecret():
         a list of precompiled regex objects.
     """
     seclst = set(['secret', 'secret[_-]?key', 'token', 'secret[_-]?token', 'password',
-              'aws_access_key_id', 'aws_secret_access_key', 'auth[-_]?token', 'access[-_]?token',
+              'aws[_-]?access[_-]?key[_-]?id', 'aws[_-]?secret[_-]?access[_-]?key', 'auth[-_]?token', 'access[-_]?token',
               'auth[-_]?key', 'client[-_]?secret', 'email','access[-_]?key',
               'id_dsa', 'encryption[-_]?key', 'passwd', 'authorization', 'bearer', 'GITHUB[_-]?TOKEN',
               'api[_-]?key', 'api[-_]?secret', 'client[_-]?key', 'client[_-]?id', 'ssh[-_]?key',
@@ -411,7 +411,7 @@ def PreCompiledRegexSecret():
     return re.compile(regex, re.MULTILINE | re.IGNORECASE)
 
 
-def PreCompiledRegexCloud():
+def pre_compiled_cloud_regex():
     """
 
     This will create list of precompiled regex object to find cloud URLs within the content.
@@ -423,7 +423,8 @@ def PreCompiledRegexCloud():
     """
     cfreg = re.compile(r'([\w]+\.cloudfront\.net)', re.MULTILINE | re.IGNORECASE)
     gbureg = re.compile(r'([\w\-.]+\.appspot\.com)', re.MULTILINE | re.IGNORECASE)
-    s3bucketreg = re.compile(r'([\w\-.]*s3[\w\-.]*\.?amazonaws\.com/?[\w\-.]*)', re.MULTILINE | re.IGNORECASE)
+    s3bucketreg = re.compile(r'(s3[\w\-.]*\.?amazonaws\.com/?[\w\-.]+)', re.MULTILINE | re.IGNORECASE)
+    s3bucketreg2 = re.compile(r'([\w\-]+.s3[\w\-.]*\.?amazonaws\.com/?)', re.MULTILINE | re.IGNORECASE)
     doreg = re.compile(r'([\w\-.]*\.?digitaloceanspaces\.com/?[\w\-.]*)', re.MULTILINE | re.IGNORECASE)
     gsreg1 = re.compile(r'(storage\.cloud\.google\.com/[\w\-.]+)', re.MULTILINE | re.IGNORECASE)
     gsreg2 = re.compile(r'([\w\-.]*\.?storage.googleapis.com/?[\w\-.]*)', re.MULTILINE | re.IGNORECASE)
@@ -439,12 +440,12 @@ def PreCompiledRegexCloud():
     firebase = re.compile(r'([\w\-.]+\.firebaseio\.com)', re.MULTILINE | re.IGNORECASE)
 
     cloudlist = [cfreg, s3bucketreg, doreg, gsreg1, gsreg2, gsreg3, gsreg4, gsreg5,
-                 azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2, firebase, gbureg]
+                 azureg1, azureg2, azureg3, rackcdnreg, dreamhostreg1, dreamhostreg2, firebase, gbureg, s3bucketreg2]
 
     return cloudlist
 
 
-def PreCompiledRegexDomain(url):
+def pre_compiled_domain_regex(url):
     """
 
     Precompiled regex to get domain from the URL.
@@ -458,7 +459,7 @@ def PreCompiledRegexDomain(url):
     return regex
 
 
-def PreCompiledRegexIP():
+def pre_compiled_ip_regex():
     """
 
     Precompiled regex to find IP version 4 address from the content.
@@ -473,7 +474,7 @@ def PreCompiledRegexIP():
     return ipv4reg
 
 
-def getInfoFromData(item_url, item_values, cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
+def get_info_from_data(item_url, item_values, cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
     """
 
     This function is used to call other functions to find secrets, cloud URLs etc.
@@ -502,7 +503,7 @@ def getInfoFromData(item_url, item_values, cloudlist, p, regex, ipv4reg, url, pr
 
     matches = p.finditer(str(item_values))
     for _, match in enumerate(matches):
-        if entropy(match.group(2)) > 3.5:
+        if entropy(match.group(2)) > 3:
             if item_url in secret_dict:
                 secret_dict[item_url].append(str(match.group()))
                 if githubsc_out and item_url.startswith("https://github.com"):
@@ -569,7 +570,7 @@ def getUrlsFromData(gitToken, domain):
     return contentApiURLs
 
 
-def getGithubData(item):
+def get_github_data(item):
     """
 
     This function will get data for a given GitHub URL.
@@ -616,7 +617,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
     jsfile = JsExtract()
     jsfile.IntJsExtract(url, heads)
     jsfile.ExtJsExtract(url, heads)
-    jsthread = ThreadPool(300)
+    jsthread = ThreadPool(8)
     jsthread.map(jsfile.SaveExtJsContent, jsLinkList)
     jsthread.close()
     jsthread.join()
@@ -624,7 +625,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
                             color='yellow',
                             attrs=['bold']))
     threads = ThreadPool(8)
-    threads.starmap(getInfoFromData,
+    threads.starmap(get_info_from_data,
                     zip(new_final_dict.keys(), new_final_dict.values(), repeat(cloudlist), repeat(p), repeat(regex),
                         repeat(ipv4reg), repeat(url), repeat(precompiled_domains_regex)))
     threads.close()
@@ -685,9 +686,9 @@ def printlogo():
 if __name__ == "__main__":
 
     domainSet = set()
-    compiledRegexCloud = PreCompiledRegexCloud()
-    compiledRegexSecretList = PreCompiledRegexSecret()
-    compiledRegexIP = PreCompiledRegexIP()
+    compiledRegexCloud = pre_compiled_cloud_regex()
+    compiledRegexSecretList = pre_compiled_secret_regex()
+    compiledRegexIP = pre_compiled_ip_regex()
 
     if args.domains:
         precompiled_domains_regex = custom_domains_regex(args.domains)
@@ -741,7 +742,7 @@ if __name__ == "__main__":
                 matches = compiledRegexSecretList.finditer(
                     str(data.replace('\n', ' ')))
                 for matchNum, match in enumerate(matches):
-                    if entropy(match.group(2)) > 3.5:
+                    if entropy(match.group(2)) > 3:
                         _path = os.path.normpath(os.path.join(os.getcwd(), path))
                         if _path in secret_dict:
                             secret_dict[_path].append(str(match.group()))
@@ -760,7 +761,7 @@ if __name__ == "__main__":
                 urllist = getUrlsFromFile()
                 if urllist:
                     for i in urllist:
-                        compiledRegexDomain = PreCompiledRegexDomain(i)
+                        compiledRegexDomain = pre_compiled_domain_regex(i)
                         domainSet.add(str(getDomain(str(i))))
                         print(termcolor.colored("Extracting data from internal and external js for url:", color='blue', attrs=['bold']))
                         print(termcolor.colored(i, color='red', attrs=['bold']))
@@ -772,11 +773,14 @@ if __name__ == "__main__":
                                 print('An error occured while fetching URL, Might be URL is wrong, Please check!')
                         except requests.exceptions.InvalidSchema:
                             print("Invalid Schema Provided!")
-                            sys.exit(1)
+                            pass
+                        
+                        new_final_dict.clear() #clear data of dict as we check new url after this.
+                        
             else:
                 try:
                     try:
-                        compiledRegexDomain = PreCompiledRegexDomain(url)
+                        compiledRegexDomain = pre_compiled_domain_regex(url)
                         domainSet.add(str(getDomain(str(url))))
                         subextractor(compiledRegexCloud, compiledRegexSecretList,
                                      compiledRegexDomain, compiledRegexIP, url, precompiled_domains_regex)
@@ -795,19 +799,19 @@ if __name__ == "__main__":
 
             if gitToken and isGit:
                 for item in domainSet:
-                    compiledRegexDomain = PreCompiledRegexDomain(item)
+                    compiledRegexDomain = pre_compiled_domain_regex(item)
                     print(
                         termcolor.colored('Finding Subdomains and secrets from Github..Please wait...', color='yellow',
                                           attrs=['bold']))
                     print(termcolor.colored(
                         'Searching in github for : ' + termcolor.colored(item, color='green', attrs=['bold']), color='blue', attrs=['bold']))
 
-                    gitThread = ThreadPool(200)
+                    gitThread = ThreadPool(8)
                     contentApiURLs = getUrlsFromData(gitToken, str(item))
-                    gitThread.map(getGithubData, contentApiURLs)
-                    gitContentThread = ThreadPool(200)
+                    gitThread.map(get_github_data, contentApiURLs)
+                    gitContentThread = ThreadPool(8)
                     try:
-                        gitContentThread.starmap(getInfoFromData,
+                        gitContentThread.starmap(get_info_from_data,
                                                  zip(git_data.keys(), git_data.values(), repeat(compiledRegexCloud),
                                                      repeat(compiledRegexSecretList),
                                                      repeat(compiledRegexDomain), repeat(compiledRegexIP),
