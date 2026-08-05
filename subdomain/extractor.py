@@ -65,16 +65,19 @@ def get_info_from_data(
         if key_norm and val_norm and key_norm == val_norm:
             continue
         if entropy(val) > 3 and not is_generic_placeholder(val):
-            state.secret_dict[item_url].append(str(match.group()))
-            if github_out and item_url.startswith("https://github.com"):
-                state.github_secrets.add(str(match.group()))
+            entry = str(match.group())
+            with state._lock:
+                state.secret_dict[item_url].append(entry)
+                if github_out and item_url.startswith("https://github.com"):
+                    state.github_secrets.add(entry)
 
     for name, pat in specific_patterns:
         for match in pat.findall(text):
             entry = f'[{name}] {match}'
-            state.secret_dict[item_url].append(entry)
-            if github_out and item_url.startswith("https://github.com"):
-                state.github_secrets.add(entry)
+            with state._lock:
+                state.secret_dict[item_url].append(entry)
+                if github_out and item_url.startswith("https://github.com"):
+                    state.github_secrets.add(entry)
 
     if domain_regex:
         for subdomain in domain_regex.findall(text):
@@ -114,6 +117,7 @@ def subextractor(
     heads: dict,
     ssl_verify: bool,
     pool_size: int,
+    verbose: bool = True,
 ) -> None:
     """Fetch *url* and all linked JS, then scan everything for secrets/subdomains."""
     from subdomain.fetcher import JsExtract
@@ -126,9 +130,10 @@ def subextractor(
     jsthread.close()
     jsthread.join()
 
-    print(termcolor.colored(
-        "Finding secrets, cloud URLs, subdomains in all Javascript files...",
-        color='yellow', attrs=['bold']))
+    if verbose:
+        print(termcolor.colored(
+            "Finding secrets, cloud URLs, subdomains in all Javascript files...",
+            color='yellow', attrs=['bold']))
 
     threads = ThreadPool(pool_size)
     threads.starmap(
@@ -149,5 +154,6 @@ def subextractor(
     threads.close()
     threads.join()
 
-    print(termcolor.colored("Searching completed...", color='blue', attrs=['bold']))
+    if verbose:
+        print(termcolor.colored("Searching completed...", color='blue', attrs=['bold']))
     state.final_list.clear()

@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -13,3 +14,5 @@ class ScanState:
     cloud_url_set:  set  = field(default_factory=set)
     final_list:     list = field(default_factory=list)
     github_secrets: set  = field(default_factory=set)
+    # Guards concurrent writes to secret_dict / github_secrets from multiple threads
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
