@@ -1,7 +1,10 @@
 [![Python 3.x](https://img.shields.io/badge/python-%3E3.6-yellow.svg)](https://www.python.org/) 
 [![Twitter](https://img.shields.io/badge/twitter-@neeraj_sonaniya-blue.svg)](https://twitter.com/neeraj_sonaniya)
 
+To secure your system with supply chain risks:
+
 [![Centriole](https://centriole.io/public/badges/NVbDCY499Lo1AODgRPtkmEdJzYveqAdTq_NYShZ2myM.svg)](https://centriole.io)
+
 ## Buy Me A [Coffee](https://www.buymeacoffee.com/neerajson)
 
 ## SubDomainizer
